@@ -1,0 +1,583 @@
+
+.planner {
+  background-color: #dcedff;
+  min-height: 100vh;
+  padding: 40px 20px;
+  font-family: 'Open Sans', sans-serif;
+}
+
+.planner-container {
+  max-width: 1200px;
+  margin: auto;
+}
+
+.planner h1 {
+  color: #1c2c4c;
+  margin-bottom: 30px;
+  font-size: 32px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* LAYOUT PRINCIPAL */
+.planner-content {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 30px;
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  align-items: start;
+}
+
+/* ===== CALENDÁRIO ===== */
+.calendar-section {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 12px;
+  height: fit-content;
+  width: 100%;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  gap: 8px;
+}
+
+.calendar-header h2 {
+  font-size: 16px;
+  color: #1c2c4c;
+  margin: 0;
+  flex: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.nav-btn {
+  background: #3f7fe3;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.nav-btn:hover {
+  background: #2e5fa8;
+  transform: scale(1.05);
+}
+
+/* DIAS DA SEMANA */
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 28px);
+  gap: 6px;
+  margin-bottom: 6px;
+  width: fit-content;
+}
+
+.weekday-name {
+  text-align: center;
+  font-weight: 600;
+  color: #666;
+  font-size: 11px;
+  padding: 2px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* GRID DO CALENDÁRIO */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 28px);
+  grid-template-rows: repeat(6, 28px);
+  gap: 6px;
+  width: fit-content;
+}
+
+.calendar-day {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  background: white;
+  border: 2px solid #e8e8e8;
+  font-weight: 500;
+  color: #888;
+  transition: all 0.3s ease;
+  position: relative;
+  font-size: 11px;
+}
+
+.calendar-day.empty {
+  background: transparent;
+  border: none;
+  cursor: default;
+}
+
+.calendar-day.today {
+  background: #e3f2fd;
+  border-color: #3f7fe3;
+  color: #3f7fe3;
+  font-weight: 700;
+}
+
+.calendar-day.selected {
+  background: linear-gradient(135deg, #3f7fe3 0%, #2e5fa8 100%);
+  border-color: #2e5fa8;
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(63, 127, 227, 0.3);
+}
+
+.calendar-day.has-schedule {
+  border-color: #f59a3c;
+  border-width: 3px;
+  background: #fffbf5;
+}
+
+.calendar-day.has-schedule:not(.selected):not(.today) {
+  color: #333;
+}
+
+.calendar-day:not(.empty):hover {
+  border-color: #3f7fe3;
+  box-shadow: 0 2px 8px rgba(63, 127, 227, 0.15);
+  transform: scale(1.05);
+}
+
+.day-indicator {
+  position: absolute;
+  bottom: 2px;
+  font-size: 14px;
+  color: #f59a3c;
+}
+
+.calendar-day.selected .day-indicator {
+  color: white;
+}
+
+/* ===== HORÁRIOS DO DIA ===== */
+.schedule-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.schedule-header {
+  border-bottom: 3px solid #f59a3c;
+  padding-bottom: 12px;
+  margin-bottom: 10px;
+}
+
+.schedule-header h3 {
+  font-size: 20px;
+  color: #1c2c4c;
+  margin: 0;
+  text-transform: capitalize;
+  font-weight: 700;
+}
+
+.schedule-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 350px;
+  padding-right: 8px;
+}
+
+.schedule-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.schedule-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.schedule-list::-webkit-scrollbar-thumb {
+  background: #3f7fe3;
+  border-radius: 10px;
+}
+
+.schedule-list::-webkit-scrollbar-thumb:hover {
+  background: #2e5fa8;
+}
+
+.schedule-item {
+  display: grid;
+  grid-template-columns: 70px 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 14px;
+  border-left: 5px solid #3f7fe3;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.schedule-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.schedule-time {
+  font-weight: 700;
+  color: #3f7fe3;
+  font-size: 15px;
+  text-align: center;
+  padding: 8px;
+  background: #e3f2fd;
+  border-radius: 8px;
+  min-width: 70px;
+}
+
+.schedule-subject {
+  padding: 10px 16px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  word-break: break-word;
+}
+
+.schedule-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  justify-self: end;
+}
+
+.btn-small {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: #3f7fe3;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-small:hover {
+  background: #2e5fa8;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(63, 127, 227, 0.3);
+}
+
+.btn-small.danger {
+  background: #e74c3c;
+}
+
+.btn-small.danger:hover {
+  background: #c0392b;
+  box-shadow: 0 2px 6px rgba(231, 76, 60, 0.3);
+}
+
+.planner .empty {
+  text-align: center;
+  color: #aaa;
+  padding: 40px 20px;
+  font-style: italic;
+  font-size: 15px;
+}
+
+/* BOTÕES DE AÇÃO */
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid #e0e0e0;
+}
+
+.btn-add {
+  flex: 1;
+  padding: 14px;
+  background: linear-gradient(135deg, #3f7fe3 0%, #2e5fa8 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(63, 127, 227, 0.2);
+}
+
+.btn-add:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(63, 127, 227, 0.3);
+}
+
+.btn-pause {
+  flex: 1;
+  padding: 14px;
+  background: white;
+  color: #3f7fe3;
+  border: 2px solid #3f7fe3;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-pause:hover {
+  background: #f0f0f0;
+  transform: translateY(-2px);
+}
+
+/* ===== TIMER FULLSCREEN ===== */
+.timer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.timer-box {
+  background: white;
+  padding: 50px;
+  border-radius: 20px;
+  text-align: center;
+}
+
+.timer-box h2 {
+  font-size: 28px;
+  color: #1c2c4c;
+  margin-bottom: 20px;
+}
+
+.timer-big {
+  font-size: 80px;
+  font-weight: 700;
+  color: #3f7fe3;
+  display: block;
+  margin: 20px 0;
+  font-family: 'Courier New', monospace;
+}
+
+.timer-big.ending {
+  color: #e74c3c;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.btn-stop {
+  padding: 14px 40px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: all 0.3s ease;
+}
+
+.btn-stop:hover {
+  background: #c0392b;
+  transform: scale(1.05);
+}
+
+/* ===== MODAL ===== */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h2 {
+  font-size: 24px;
+  color: #1c2c4c;
+  margin-bottom: 20px;
+  margin-top: 0;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  font-family: 'Open Sans', sans-serif;
+}
+
+.modal-content input[type="time"] {
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.modal-content input:focus {
+  outline: none;
+  border-color: #3f7fe3;
+  box-shadow: 0 0 0 3px rgba(63, 127, 227, 0.1);
+}
+
+.modal-content input[type="color"] {
+  height: 50px;
+  cursor: pointer;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.modal-buttons button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.modal-buttons button:first-child {
+  background: linear-gradient(135deg, #3f7fe3 0%, #2e5fa8 100%);
+  color: white;
+}
+
+.modal-buttons button:first-child:hover {
+  transform: translateY(-2px);
+}
+
+.modal-buttons button:last-child {
+  background: #f0f0f0;
+  color: #666;
+}
+
+.modal-buttons button:last-child:hover {
+  background: #e0e0e0;
+}
+
+.pause-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.pause-options button {
+  padding: 12px;
+  border: 2px solid #3f7fe3;
+  background: transparent;
+  color: #3f7fe3;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pause-options button:hover {
+  background: #3f7fe3;
+  color: white;
+}
+
+.cancel-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  background: #f0f0f0;
+  color: #666;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 15px;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+  background: #e0e0e0;
+}
+
+/* RESPONSIVO */
+@media (max-width: 768px) {
+  .planner-content {
+    grid-template-columns: 1fr;
+  }
+
+  .planner h1 {
+    font-size: 24px;
+  }
+
+  .calendar-section {
+    order: 2;
+  }
+
+  .schedule-section {
+    order: 1;
+  }
+
+  .calendar-grid {
+    gap: 4px;
+    min-height: auto;
+  }
+
+  .calendar-day {
+    min-height: 32px;
+    font-size: 12px;
+  }
+
+  .timer-big {
+    font-size: 60px;
+  }
+}

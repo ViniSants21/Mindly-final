@@ -1,0 +1,185 @@
+/* PAGE */
+.edit-profile-page {
+  background-color: #b7d1df;
+  min-height: 100vh;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADER */
+.profile-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.profile-header .bar {
+  width: 6px;
+  height: 30px;
+  background-color: #ff8c2b;
+  margin-right: 10px;
+  border-radius: 3px;
+}
+
+.profile-header h1 {
+  color: #0d3b75;
+  font-size: 24px;
+}
+
+/* CARD */
+.edit-card {
+  background: #f2f2f2;
+  border-radius: 16px;
+  padding: 40px;
+  display: flex;
+  gap: 50px;
+  align-items: flex-start;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* AVATAR */
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 180px;
+}
+
+.avatar {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  margin-bottom: 10px;
+  object-fit: cover;
+  border: 3px solid #2f7de1;
+}
+
+/* INPUT AVATAR */
+.avatar-section input {
+  padding: 10px;
+  border-radius: 20px;
+  border: none;
+  background-color: #2f5c8f;
+  color: white;
+  outline: none;
+  width: 100%;
+  text-align: center;
+}
+
+.avatar-section small {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+}
+
+/* FORM */
+.edit-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* TITULOS DE SEÇÃO */
+.edit-form h3 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #6b8fb5;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* LABEL */
+.edit-form label {
+  margin-top: 10px;
+  margin-bottom: 5px;
+  color: #0d3b75;
+  font-size: 14px;
+}
+
+/* INPUTS */
+.edit-form input,
+.edit-form select,
+.edit-form textarea {
+  padding: 12px;
+  border-radius: 20px;
+  border: none;
+  background-color: #2f5c8f;
+  color: white;
+  outline: none;
+  font-size: 14px;
+}
+
+/* PLACEHOLDER */
+.edit-form input::placeholder,
+.edit-form textarea::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* TEXTAREA */
+.edit-form textarea {
+  resize: none;
+  min-height: 90px;
+}
+
+/* SELECT */
+.edit-form select {
+  cursor: pointer;
+}
+
+/* BOTÕES */
+.buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 25px;
+}
+
+/* CANCEL */
+.cancel {
+  background: transparent;
+  border: 1px solid #2f7de1;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  color: #2f7de1;
+  transition: 0.3s;
+}
+
+.cancel:hover {
+  background-color: #2f7de1;
+  color: white;
+}
+
+/* SAVE */
+.save {
+  background-color: #ffd24d;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.save:hover {
+  background-color: #ffbf00;
+}
+
+/* RESPONSIVO */
+@media (max-width: 768px) {
+  .edit-card {
+    flex-direction: column;
+    align-items: center;
+    padding: 25px;
+  }
+
+  .avatar-section {
+    width: 100%;
+  }
+
+  .edit-form {
+    width: 100%;
+  }
+}

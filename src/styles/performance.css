@@ -1,0 +1,286 @@
+/* FUNDO */
+.performance {
+   background-color: #dcedff;
+  min-height: 100vh;
+}
+
+/* CONTAINER CENTRAL */
+.performance .container {
+  padding: 30px 120px;
+}
+
+/* ================= TITULOS ================= */
+.section {
+  margin-bottom: 40px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.bar {
+  width: 6px;
+  height: 20px;
+  background: orange;
+}
+
+.section-title h2 {
+  color: #1f3c5a;
+}
+
+/* ================= CONQUISTAS ================= */
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 200px);
+  gap: 20px;
+}
+
+.achievement-card {
+  height: 140px;
+  border-radius: 15px;
+  padding: 15px;
+  font-size: 13px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.achievement-card.active {
+  background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+  border: 2px solid #f59a3c;
+  box-shadow: 0 6px 16px rgba(245, 154, 60, 0.25);
+  cursor: pointer;
+}
+
+.achievement-card.active:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(245, 154, 60, 0.35);
+}
+
+.achievement-card.active h3 {
+  color: #f59a3c;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.achievement-card.active p {
+  color: #666;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.achievement-card.active span {
+  color: #27ae60;
+  font-weight: 600;
+  background: rgba(39, 174, 96, 0.1);
+  padding: 4px 12px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.achievement-card.locked {
+  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+  border: 2px dashed #ccc;
+  color: #999;
+}
+
+.achievement-card.locked:hover {
+  border-color: #999;
+}
+
+.locked-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.lock-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 50px;
+  height: 50px;
+  background: rgba(153, 153, 153, 0.1);
+  border-radius: 50%;
+}
+
+
+/* ================= DESEMPENHO ================= */
+.performance-grid {
+  display: grid;
+  grid-template-columns: 300px 400px;
+  gap: 40px;
+}
+
+.performance .card {
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+}
+
+/* GRÁFICO */
+.fake-chart {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  margin: 20px auto;
+  background: conic-gradient(
+    #3a7bd5 0% 35%,
+    #27ae60 35% 60%,
+    #f2c94c 60% 80%,
+    #eb5757 80% 100%
+  );
+}
+
+/* PROGRESSO */
+.performance .progress-item {
+  margin-bottom: 12px;
+}
+
+.performance .progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.performance .progress-bar {
+  background: #eee;
+  height: 6px;
+  border-radius: 10px;
+}
+
+.performance .progress-bar div {
+  height: 100%;
+  background: #3a7bd5;
+  border-radius: 10px;
+}
+
+/* ================= RECOMPENSAS ================= */
+
+/* topo */
+.rewards-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.coins-box {
+  background: #e5e5e5;
+  padding: 8px 15px;
+  border-radius: 15px;
+  font-size: 13px;
+}
+
+/* filtros */
+.filters {
+  display: flex;
+  gap: 15px;
+  font-size: 13px;
+  margin: 10px 0;
+}
+
+.filters span {
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.filters .active {
+  font-weight: bold;
+  opacity: 1;
+}
+
+/* linha */
+hr {
+  border: none;
+  border-top: 1px solid #aaa;
+  margin-bottom: 20px;
+}
+
+/* cards */
+.rewards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 200px);
+  gap: 25px;
+}
+
+.reward-card {
+  background: #f3f3f3;
+  border-radius: 20px;
+  padding: 20px;
+  text-align: center;
+  border: 2px solid #f2c94c;
+  transition: 0.2s;
+}
+
+.reward-card:hover {
+  transform: translateY(-3px);
+}
+
+.reward-card .icon {
+  font-size: 35px;
+  margin-bottom: 10px;
+}
+
+.reward-card p {
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.reward-card button {
+  background: #f2c94c;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* bloqueado */
+.reward-card.locked {
+  background: #ddd;
+  opacity: 0.6;
+}
+
+/* ================= TOAST ================= */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: white;
+  padding: 12px 18px;
+  border-radius: 15px;
+  font-size: 13px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ================= FOOTER ================= */
+.footer {
+  background: #ddd;
+  padding: 20px;
+  text-align: center;
+  font-size: 12px;
+}

@@ -1,0 +1,136 @@
+/* =====================================================================
+   AUTH (Login / Cadastro)
+   Estilos escopados em .login-container para não colidir com o global.
+   ===================================================================== */
+.login-container {
+  display: flex;
+  min-height: 100vh;
+  font-family: var(--font-body);
+}
+
+/* LADO ESQUERDO (formulário) */
+.login-left {
+  flex: 1;
+  background-color: #0d3b75;
+  color: white;
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.login-left h1 {
+  font-size: 32px;
+  font-weight: bold;
+  color: #ffd24d;
+  margin-bottom: 10px;
+  font-family: var(--font-title);
+}
+.login-left > p {
+  margin-bottom: 25px;
+  font-size: 14px;
+}
+.login-form {
+  display: flex;
+  flex-direction: column;
+}
+.login-form label {
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+.login-form input {
+  margin-bottom: 15px;
+  padding: 12px;
+  border-radius: 20px;
+  border: none;
+  background-color: #2f5c8f;
+  color: white;
+  outline: none;
+  font-family: var(--font-body);
+}
+.login-form input::placeholder {
+  color: #cfd8dc;
+}
+.forgot {
+  font-size: 12px;
+  color: #ffd24d;
+  margin-bottom: 15px;
+  cursor: pointer;
+}
+
+/* Botão entrar (escopado) */
+.login-form .btn-auth {
+  background-color: #ffd24d;
+  color: #0d3b75;
+  border: none;
+  padding: 12px;
+  border-radius: 25px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: 0.2s;
+}
+.login-form .btn-auth:hover {
+  transform: scale(1.02);
+}
+.login-form .btn-auth:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Botão Google */
+.btn-google {
+  background-color: transparent;
+  border: 2px solid #ffffff;
+  padding: 12px;
+  border-radius: 25px;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-google:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.auth-error {
+  background: rgba(255, 77, 77, 0.18);
+  border: 1px solid #ff8a8a;
+  color: #ffe0e0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.register {
+  margin-top: 15px;
+  font-size: 13px;
+  color: #ffd24d;
+}
+
+/* LADO DIREITO (marca) */
+.login-right {
+  flex: 1;
+  background-color: #b7d1df;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.login-right .brand-logo {
+  color: #0d3b75;
+  font-size: 40px;
+  margin-bottom: 20px;
+  font-family: var(--font-title);
+}
+.login-right img {
+  width: 250px;
+}
+
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+  }
+  .login-right {
+    padding: 40px 0;
+  }
+}
