@@ -57,8 +57,10 @@ export const challengesService = {
 
   /**
    * Soma `amount` ao progresso do usuário num desafio (limitado a 100).
-   * Chama a função RPC `increment_challenge_progress` no banco, que faz
-   * a soma de forma atômica e devolve o novo progresso.
+   * Retorna: { progress, newly_unlocked: [...], coins_earned }
+   *   - progress: novo valor de progresso (0–100)
+   *   - newly_unlocked: array de conquistas desbloqueadas nesta jogada
+   *   - coins_earned: moedas ganhas por conquistas (já creditadas no perfil)
    */
   async addProgress(userId, challengeId, amount) {
     const { data, error } = await supabase.rpc(
@@ -66,7 +68,7 @@ export const challengesService = {
       { p_user_id: userId, p_challenge_id: challengeId, p_amount: amount }
     );
     if (error) throw error;
-    return data; // novo valor de progresso
+    return data; // { progress, newly_unlocked, coins_earned }
   },
 
   // ---- operações de Admin ----
