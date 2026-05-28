@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { plannerService } from "../services/plannerService";
+import { useToast } from "../hooks/useToast";
 import "../styles/planner.css";
 
 const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
@@ -11,7 +12,6 @@ const monthNames = [
 ];
 
 const formatDateKey = (date) => {
-  // Usa data local (evita o "voltar um dia" do toISOString em UTC)
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
@@ -21,33 +21,46 @@ const formatDateKey = (date) => {
 export default function Planner() {
   const { session } = useAuth();
   const userId = session?.user?.id;
+  const { message: toastMsg, showToast } = useToast(3500);
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [blocks, setBlocks] = useState([]); // todos os blocos do usuário
+  const [blocks, setBlocks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [form, setForm] = useState({ time: "", subject: "", color: "#3b82f6" });
-  const [editing, setEditing] = useState(null); // bloco em edição
+  const [editing, setEditing] = useState(null);
 
   const [timeLeft, setTimeLeft] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
 
-  // Carrega todos os blocos do usuário
+  // -------------------------------------------------------------------
+  // Carrega todos os blocos do usuário (apenas na montagem / troca de userId)
+  // -------------------------------------------------------------------
   const loadBlocks = useCallback(async () => {
-    if (!userId) return;
+    // BUG FIX: sempre finaliza o loading, mesmo sem userId
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const data = await plannerService.listAll(userId);
       setBlocks(data);
     } catch (err) {
-      console.error("Planner:", err.message);
+      console.error("[Planner] loadBlocks:", err);
+      showToast(
+        "Erro ao carregar horários: " +
+          (err?.message ?? "verifique sua conexão e recarregue a página")
+      );
     } finally {
+      // BUG FIX: sempre chamado, nunca deixa o loading preso
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, showToast]);
 
   useEffect(() => {
     loadBlocks();
@@ -74,20 +87,73 @@ export default function Planner() {
     .filter((b) => b.date === selectedKey)
     .sort((a, b) => a.time.localeCompare(b.time));
 
+  // -------------------------------------------------------------------
+  // Salvar (criar ou editar)
+  //
+  // BUG FIX PRINCIPAL: antes, handleSave chamava `await loadBlocks()`
+  // ANTES de fechar o modal. Se o loadBlocks travasse (query pendente),
+  // o modal ficava aberto e o loading nunca terminava — loading infinito.
+  //
+  // Correção: usamos atualização otimista de estado com o dado retornado
+  // pelo próprio INSERT/UPDATE. O modal fecha imediatamente. Nenhuma
+  // query extra é disparada, e o loading da lista não é tocado.
+  // -------------------------------------------------------------------
   const handleSave = async () => {
-    if (!form.time || !form.subject || !userId) return;
+    if (!form.time || !form.subject) return;
+
+    // BUG FIX: feedback claro em vez de retorno silencioso
+    if (!userId) {
+      showToast("Sessão expirada. Saia e entre novamente.");
+      return;
+    }
+
+    setSaving(true);
     try {
       if (editing) {
-        await plannerService.update(editing.id, form);
+        const updated = await plannerService.update(editing.id, form);
+        // Atualização otimista: troca o bloco antigo pelo atualizado
+        setBlocks((prev) =>
+          prev.map((b) => (b.id === editing.id ? updated : b))
+        );
       } else {
-        await plannerService.create(userId, { date: selectedKey, ...form });
+        const created = await plannerService.create(userId, {
+          date: selectedKey,
+          ...form,
+        });
+        // Atualização otimista: insere o novo bloco diretamente no estado
+        setBlocks((prev) => [...prev, created]);
       }
-      await loadBlocks();
+
+      // Fecha o modal IMEDIATAMENTE — sem dependência de query extra
       setShowAddModal(false);
       setForm({ time: "", subject: "", color: "#3b82f6" });
       setEditing(null);
+      showToast("Horário salvo com sucesso!");
     } catch (err) {
-      alert("Erro ao salvar: " + err.message);
+      console.error("[Planner] handleSave:", err);
+      const detail = err?.message ?? "erro desconhecido";
+
+      // Mensagens amigáveis para os erros mais comuns do Supabase / Postgres
+      if (detail.includes("row-level security")) {
+        showToast(
+          "Permissão negada (RLS). Verifique se o schema foi aplicado no Supabase."
+        );
+      } else if (detail.includes("foreign key") || detail.includes("violates")) {
+        showToast(
+          "Erro de integridade: perfil não encontrado. Execute o schema.sql no Supabase e tente novamente."
+        );
+      } else if (detail.includes("does not exist") || detail.includes("42P01")) {
+        showToast(
+          "Tabela não encontrada. Execute o schema.sql no Supabase SQL Editor."
+        );
+      } else if (detail.includes("Tempo esgotado")) {
+        showToast(detail);
+      } else {
+        showToast("Erro ao salvar: " + detail);
+      }
+      // Modal permanece aberto para o usuário tentar novamente
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -100,9 +166,12 @@ export default function Planner() {
   const handleDelete = async (block) => {
     try {
       await plannerService.remove(block.id);
+      // Remoção otimista: remove do estado imediatamente
       setBlocks((prev) => prev.filter((b) => b.id !== block.id));
+      showToast("Horário excluído.");
     } catch (err) {
-      alert("Erro ao excluir: " + err.message);
+      console.error("[Planner] handleDelete:", err);
+      showToast("Erro ao excluir: " + (err?.message ?? "tente novamente"));
     }
   };
 
@@ -271,6 +340,9 @@ export default function Planner() {
         </div>
       </div>
 
+      {/* TOAST — notificações de feedback para o usuário */}
+      {toastMsg && <div className="planner-toast">{toastMsg}</div>}
+
       {/* TIMER FULLSCREEN */}
       {isRunning && (
         <div className="timer-overlay">
@@ -295,20 +367,26 @@ export default function Planner() {
               type="time"
               value={form.time}
               onChange={(e) => setForm({ ...form, time: e.target.value })}
+              disabled={saving}
             />
             <input
               placeholder="Disciplina"
               value={form.subject}
               onChange={(e) => setForm({ ...form, subject: e.target.value })}
+              disabled={saving}
             />
             <input
               type="color"
               value={form.color}
               onChange={(e) => setForm({ ...form, color: e.target.value })}
+              disabled={saving}
             />
             <div className="modal-buttons">
-              <button onClick={handleSave}>Salvar</button>
+              <button onClick={handleSave} disabled={saving}>
+                {saving ? "Salvando…" : "Salvar"}
+              </button>
               <button
+                disabled={saving}
                 onClick={() => {
                   setShowAddModal(false);
                   setEditing(null);
