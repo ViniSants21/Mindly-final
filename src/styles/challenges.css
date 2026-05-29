@@ -460,6 +460,87 @@
 }
 
 /* ================================================================
+   MÚLTIPLA ESCOLHA — perguntas do banco
+   ================================================================ */
+.question-challenge-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 10px;
+}
+
+.question-text {
+  color: var(--navy);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.5;
+  margin-bottom: 22px;
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  margin-bottom: 6px;
+}
+
+.option-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 13px 16px;
+  background: #f5f8ff;
+  border: 2px solid #e4e4e4;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--navy);
+  text-align: left;
+  font-family: var(--font-body);
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+  line-height: 1.4;
+}
+
+.option-btn:hover:not(:disabled) {
+  border-color: var(--blue);
+  background: rgba(63, 127, 227, 0.06);
+  transform: translateX(2px);
+}
+
+.option-btn.option-selected {
+  border-color: var(--blue);
+  background: rgba(63, 127, 227, 0.1);
+}
+
+.option-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.option-letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 50%;
+  background: #d9e6fb;
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.option-btn.option-selected .option-letter {
+  background: var(--blue);
+  color: #fff;
+}
+
+/* ================================================================
    TOAST DE CONQUISTA
    ================================================================ */
 .achievement-toast {

@@ -110,26 +110,6 @@
   margin-top: 0;
 }
 
-.admin-dashboard-row {
-  display: flex;
-  gap: 30px;
-}
-
-@media (max-width: 1024px) {
-  .admin-dashboard-row {
-    flex-direction: column;
-  }
-}
-
-.chart-panel { flex: 2; }
-.subs-panel { flex: 1; }
-
-.chart-panel h3, .subs-panel h3 {
-  font-size: 18px;
-  color: #1c2c4c;
-  margin-bottom: 30px;
-}
-
 .admin-panel-header {
   display: flex;
   justify-content: space-between;
@@ -160,8 +140,6 @@
   text-align: center;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
-
-.admin-stat-card.popular { border-color: #f59a3c; }
 
 .admin-stat-card h3 {
   font-size: 36px;
@@ -255,21 +233,6 @@
 .activity-dot.orange { background: #f59a3c; }
 .activity-dot.green { background: #32CD32; }
 
-/* --- PLANOS --- */
-.admin-plans-grid {
-  display: flex;
-  gap: 30px;
-  justify-content: flex-start;
-  flex-wrap: wrap;
-}
-
-.admin-plan-desc {
-  font-size: 13px;
-  color: #666;
-  margin-bottom: 20px;
-  min-height: 40px;
-}
-
 /* --- MODAIS --- */
 .admin-modal-overlay {
   position: fixed;
@@ -354,148 +317,6 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
-/* --- GRÁFICO CSS --- */
-.css-chart-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  height: 250px;
-  padding-top: 20px;
-  border-bottom: 2px solid #f0f0f0;
-  border-left: 2px solid #f0f0f0;
-  padding-left: 10px;
-  padding-bottom: 10px;
-}
-
-.chart-bar-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
-  width: 12%;
-  height: 100%;
-  justify-content: flex-end;
-}
-
-.chart-bar-bg {
-  width: 100%;
-  max-width: 40px;
-  height: 100%;
-  background: transparent;
-  display: flex;
-  align-items: flex-end;
-  border-radius: 6px 6px 0 0;
-}
-
-.chart-bar-fill {
-  width: 100%;
-  background: linear-gradient(to top, #3f7fe3, #6fa4f5);
-  border-radius: 6px 6px 0 0;
-  position: relative;
-  transition: all 0.4s ease;
-  cursor: pointer;
-}
-
-.chart-bar-fill:hover {
-  background: linear-gradient(to top, #f59a3c, #fbc07e);
-  transform: translateY(-5px);
-}
-
-.chart-tooltip {
-  position: absolute;
-  top: -35px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #1c2c4c;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.chart-tooltip::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 50%;
-  transform: translateX(-50%);
-  border-width: 4px 4px 0;
-  border-style: solid;
-  border-color: #1c2c4c transparent transparent transparent;
-}
-
-.chart-bar-fill:hover .chart-tooltip {
-  opacity: 1;
-  visibility: visible;
-  top: -40px;
-}
-
-.chart-label {
-  font-size: 13px;
-  color: #666;
-  font-weight: 500;
-}
-
-/* --- BARRAS DE ASSINANTES --- */
-.subs-list {
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-}
-
-.sub-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.sub-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-}
-
-.sub-name {
-  font-weight: 600;
-  color: #1c2c4c;
-  font-size: 15px;
-}
-
-.sub-count {
-  font-size: 18px;
-  color: #1c2c4c;
-}
-
-.sub-count small {
-  font-size: 12px;
-  color: #888;
-  font-weight: 400;
-}
-
-.sub-progress-bg {
-  width: 100%;
-  height: 8px;
-  background: #f0f0f0;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.sub-progress-fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.8s ease-out;
-}
-
-.sub-percent {
-  font-size: 12px;
-  color: #888;
-  text-align: right;
-}
 /* ===== Classes compartilhadas usadas pelo Admin ===== */
 /* (auto-contidas aqui para o painel não depender de outras páginas) */
 .admin-layout .btn-primary {
@@ -545,19 +366,6 @@
   transition: 0.2s;
 }
 
-.admin-layout .pricing-card {
-  background: #fff;
-  padding: 30px;
-  border-radius: 18px;
-  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
-  text-align: center;
-  transition: all 0.3s ease;
-}
-.admin-layout .pricing-card:hover { transform: translateY(-6px); }
-.admin-layout .pricing-card.popular { border: 3px solid #f59a3c; }
-.admin-layout .pricing-card h3 { font-size: 22px; margin-bottom: 10px; color: #1c2c4c; }
-.admin-layout .price { font-size: 26px; font-weight: 600; color: #3f7fe3; margin-bottom: 14px; }
-
 .admin-layout .challenge-badge {
   padding: 6px 14px;
   border-radius: 20px;
@@ -566,6 +374,5 @@
 }
 .admin-layout .ongoing-badge { background: #FFE5B4; color: #D97706; }
 .admin-layout .completed-badge { background: #D1E7F5; color: #3f7fe3; }
-.admin-layout .stat-progress { color: #3f7fe3; font-weight: 600; }
 .admin-layout .text-success { color: #2e9e4f; }
 .admin-layout .text-danger { color: #ff4d4d; }

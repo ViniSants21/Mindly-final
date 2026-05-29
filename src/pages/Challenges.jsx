@@ -17,9 +17,11 @@ export default function Challenges() {
   const [answer, setAnswer] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [pendingChallenge, setPendingChallenge] = useState(null);
   const modalRef = useRef(null);
+  // Guarda o id da última pergunta exibida por desafio para evitar repetição consecutiva
+  const lastQuestionRef = useRef({});
 
-  // Toast para feedback de conquistas desbloqueadas
   const { message: toastMsg, showToast } = useToast(4000);
 
   const load = useCallback(async () => {
@@ -52,12 +54,43 @@ export default function Challenges() {
   const ongoing = progressMap.filter((p) => p.progress < 100);
   const completed = progressMap.filter((p) => p.progress >= 100);
 
-  const openGame = (progressEntry) => {
-    // Distribui jogos pelos desafios em andamento (rotação pelo índice)
-    const idx = ongoing.indexOf(progressEntry) % games.length;
-    setActiveGame({ ...games[idx], challengeId: progressEntry.challenge_id });
+  // Busca perguntas do banco vinculadas ao challenge_id exato do desafio
+  const openGame = async (progressEntry) => {
+    setPendingChallenge(progressEntry.challenge_id);
     setMessage("");
     setAnswer("");
+    try {
+      const questions = await challengesService.getQuestionsForChallenge(
+        progressEntry.challenge_id
+      );
+
+      if (!questions || questions.length === 0) {
+        showToast("⚠️ Nenhuma pergunta disponível para este desafio.");
+        return;
+      }
+
+      // Evita repetir a mesma pergunta duas vezes seguidas no mesmo desafio
+      const lastId = lastQuestionRef.current[progressEntry.challenge_id];
+      const pool =
+        questions.length > 1
+          ? questions.filter((q) => q.id !== lastId)
+          : questions;
+
+      const chosen = pool[Math.floor(Math.random() * pool.length)];
+      lastQuestionRef.current[progressEntry.challenge_id] = chosen.id;
+
+      setActiveGame({
+        ...chosen,
+        reward: 15,
+        challengeId: progressEntry.challenge_id,
+        challengeTitle: progressEntry.challenge?.title,
+      });
+    } catch (err) {
+      console.error("Erro ao carregar perguntas:", err.message);
+      showToast("❌ Erro ao carregar perguntas. Tente novamente.");
+    } finally {
+      setPendingChallenge(null);
+    }
   };
 
   const closeModal = () => {
@@ -68,8 +101,29 @@ export default function Challenges() {
 
   const checkAnswer = async () => {
     if (!activeGame || submitting) return;
-    const correct =
-      answer.trim().toLowerCase() === activeGame.answer.toLowerCase();
+
+    let correct = false;
+
+    if (isDbQuestion) {
+      const dbAnswer = activeGame.correct_answer?.trim().toLowerCase() ?? null;
+      const selected  = answer.trim().toLowerCase(); // 'a', 'b', 'c' ou 'd'
+
+      if (!dbAnswer) {
+        // Gabarito não configurado no banco — não aceita nenhuma resposta
+        correct = false;
+      } else if (["a", "b", "c", "d"].includes(dbAnswer)) {
+        // Banco guarda a LETRA da opção correta ('a','b','c','d')
+        correct = selected === dbAnswer;
+      } else {
+        // Banco guarda o TEXTO da opção correta — compara com o texto da opção selecionada
+        const selectedText = (activeGame[`option_${selected}`] ?? "").trim().toLowerCase();
+        correct = selectedText === dbAnswer;
+      }
+    } else {
+      // Jogo de prática (legado) — comparação por texto livre
+      const correctValue = (activeGame.answer ?? "").trim().toLowerCase();
+      correct = answer.trim().toLowerCase() === correctValue;
+    }
 
     if (correct) {
       setMessage("✅ Acertou!!");
@@ -80,10 +134,9 @@ export default function Challenges() {
           const result = await challengesService.addProgress(
             userId,
             activeGame.challengeId,
-            activeGame.reward
+            activeGame.reward ?? 15
           );
 
-          // Exibe toast para cada conquista desbloqueada nesta jogada
           const unlocked = result?.newly_unlocked || [];
           unlocked.forEach((ach) => {
             showToast(
@@ -105,6 +158,9 @@ export default function Challenges() {
     setTimeout(() => setMessage(""), 2500);
     setAnswer("");
   };
+
+  // Perguntas do banco têm o campo 'question'; jogos de prática têm 'prompt'
+  const isDbQuestion = Boolean(activeGame?.question);
 
   return (
     <section className="challenges">
@@ -160,8 +216,11 @@ export default function Challenges() {
                     <button
                       className="challenge-btn"
                       onClick={() => openGame(p)}
+                      disabled={pendingChallenge === p.challenge_id}
                     >
-                      Continuar
+                      {pendingChallenge === p.challenge_id
+                        ? "Carregando…"
+                        : "Continuar"}
                     </button>
                   </div>
                 </div>
@@ -202,7 +261,10 @@ export default function Challenges() {
                   <div className="challenge-right">
                     <div className="progress-section">
                       <div className="progress-bar">
-                        <div className="progress-fill completed-fill" style={{ width: "100%" }} />
+                        <div
+                          className="progress-fill completed-fill"
+                          style={{ width: "100%" }}
+                        />
                       </div>
                       <span className="progress-text">100%</span>
                     </div>
@@ -216,7 +278,7 @@ export default function Challenges() {
           </div>
         </div>
 
-        {/* JOGOS */}
+        {/* JOGOS DE PRÁTICA — dados estáticos, independentes dos desafios */}
         <div className="challenges-section">
           <h2>
             <span className="section-bar" />
@@ -239,9 +301,13 @@ export default function Challenges() {
         </div>
       </div>
 
-      {/* MODAL DE JOGO */}
+      {/* MODAL — múltipla escolha (banco) ou texto livre (prática) */}
       {activeGame && (
-        <div className="game-overlay" ref={modalRef} onClick={(e) => e.target === e.currentTarget && closeModal()}>
+        <div
+          className="game-overlay"
+          ref={modalRef}
+          onClick={(e) => e.target === e.currentTarget && closeModal()}
+        >
           <div className="game-modal">
             <button className="close-btn" onClick={closeModal} aria-label="Fechar">
               ✕
@@ -250,30 +316,66 @@ export default function Challenges() {
             <div className="game-modal-icon">
               {getIcon("lightning", { size: 32, color: "#f59a3c" })}
             </div>
-            <h2>{activeGame.title}</h2>
-            <p>{activeGame.prompt}</p>
-            {activeGame.hint && (
-              <div className="hint">💡 {activeGame.hint}</div>
+
+            {isDbQuestion ? (
+              /* Pergunta do banco — múltipla escolha */
+              <>
+                {activeGame.challengeTitle && (
+                  <div className="question-challenge-label">
+                    {activeGame.challengeTitle}
+                  </div>
+                )}
+                <h2 className="question-text">{activeGame.question}</h2>
+
+                <div className="options-list">
+                  {["a", "b", "c", "d"].map((key) =>
+                    activeGame[`option_${key}`] ? (
+                      <button
+                        key={key}
+                        className={`option-btn${answer === key ? " option-selected" : ""}`}
+                        onClick={() => !submitting && setAnswer(key)}
+                        disabled={submitting}
+                      >
+                        <span className="option-letter">{key.toUpperCase()}</span>
+                        <span>{activeGame[`option_${key}`]}</span>
+                      </button>
+                    ) : null
+                  )}
+                </div>
+              </>
+            ) : (
+              /* Jogo de prática — resposta em texto livre */
+              <>
+                <h2>{activeGame.title}</h2>
+                <p>{activeGame.prompt}</p>
+                {activeGame.hint && (
+                  <div className="hint">💡 {activeGame.hint}</div>
+                )}
+                <input
+                  placeholder="Sua resposta"
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && checkAnswer()}
+                  disabled={submitting}
+                  autoFocus
+                />
+              </>
             )}
 
-            <input
-              placeholder="Sua resposta"
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && checkAnswer()}
-              disabled={submitting}
-              autoFocus
-            />
             <button
               className="submit-btn"
               onClick={checkAnswer}
               disabled={submitting || !answer.trim()}
             >
-              {submitting ? "Verificando…" : "Enviar Resposta"}
+              {submitting ? "Verificando…" : "Confirmar Resposta"}
             </button>
 
             {message && (
-              <div className={`game-message ${message.startsWith("✅") ? "correct" : "wrong"}`}>
+              <div
+                className={`game-message ${
+                  message.startsWith("✅") ? "correct" : "wrong"
+                }`}
+              >
                 {message}
               </div>
             )}
@@ -282,11 +384,7 @@ export default function Challenges() {
       )}
 
       {/* TOAST DE CONQUISTA DESBLOQUEADA */}
-      {toastMsg && (
-        <div className="achievement-toast">
-          {toastMsg}
-        </div>
-      )}
+      {toastMsg && <div className="achievement-toast">{toastMsg}</div>}
     </section>
   );
 }

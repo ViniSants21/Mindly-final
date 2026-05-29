@@ -34,37 +34,6 @@ export const adminService = {
     return this.updateUser(userId, { status: next });
   },
 
-  // ---------- PLANOS ----------
-  async listPlans() {
-    const { data, error } = await supabase
-      .from("plans")
-      .select("*")
-      .order("sort_order", { ascending: true });
-    if (error) throw error;
-    return data;
-  },
-
-  async createPlan({ name, price, description }) {
-    const { data, error } = await supabase
-      .from("plans")
-      .insert({ name, price, description })
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
-  },
-
-  async updatePlan(planId, updates) {
-    const { data, error } = await supabase
-      .from("plans")
-      .update(updates)
-      .eq("id", planId)
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
-  },
-
   // ---------- TICKETS ----------
   async listTickets() {
     const { data, error } = await supabase
@@ -87,19 +56,8 @@ export const adminService = {
   },
 
   // ---------- ESTATÍSTICAS / DASHBOARD ----------
-  /** Estatísticas agregadas via função RPC `admin_dashboard_stats`. */
   async getDashboardStats() {
     const { data, error } = await supabase.rpc("admin_dashboard_stats");
-    if (error) throw error;
-    return data;
-  },
-
-  /** Receita mensal (tabela revenue) para o gráfico de barras. */
-  async listRevenue() {
-    const { data, error } = await supabase
-      .from("revenue")
-      .select("*")
-      .order("sort_order", { ascending: true });
     if (error) throw error;
     return data;
   },

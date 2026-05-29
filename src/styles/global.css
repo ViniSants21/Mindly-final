@@ -429,67 +429,6 @@ button {
 }
 
 /* =====================================================================
-   PRICING
-   ===================================================================== */
-.pricing {
-  padding: 60px 80px;
-  text-align: center;
-}
-.pricing h2 {
-  font-size: 32px;
-  margin-bottom: 20px;
-  color: var(--navy);
-}
-.pricing > .container > p {
-  font-size: 18px;
-  color: var(--gray-text);
-  margin-bottom: 40px;
-}
-.pricing-grid {
-  display: flex;
-  gap: 30px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-.pricing-card {
-  background: var(--white);
-  padding: 30px;
-  border-radius: var(--radius-lg);
-  width: 300px;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
-  text-align: center;
-  animation: slideInUp 0.6s ease-out;
-  transition: all 0.3s ease;
-}
-.pricing-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
-}
-.pricing-card.popular {
-  border: 3px solid var(--orange);
-}
-.pricing-card h3 {
-  font-size: 24px;
-  margin-bottom: 10px;
-  color: var(--navy);
-}
-.price {
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--blue);
-  margin-bottom: 20px;
-}
-.pricing-card ul {
-  list-style: none;
-  text-align: left;
-  margin-bottom: 20px;
-}
-.pricing-card li {
-  margin-bottom: 8px;
-  font-size: 14px;
-}
-
-/* =====================================================================
    CONTACT
    ===================================================================== */
 .contact {
@@ -784,7 +723,6 @@ button {
   .hero,
   .tools,
   .about,
-  .pricing,
   .contact {
     padding-left: 24px;
     padding-right: 24px;

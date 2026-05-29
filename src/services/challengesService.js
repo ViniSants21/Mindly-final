@@ -71,6 +71,19 @@ export const challengesService = {
     return data; // { progress, newly_unlocked, coins_earned }
   },
 
+  /**
+   * Busca todas as perguntas de múltipla escolha vinculadas a um desafio.
+   * Usa select("*") para retornar todas as colunas presentes na tabela.
+   */
+  async getQuestionsForChallenge(challengeId) {
+    const { data, error } = await supabase
+      .from("challenge_questions")
+      .select("*")
+      .eq("challenge_id", challengeId);
+    if (error) throw error;
+    return data;
+  },
+
   // ---- operações de Admin ----
 
   async create({ title, description, icon, status = "Ativo" }) {

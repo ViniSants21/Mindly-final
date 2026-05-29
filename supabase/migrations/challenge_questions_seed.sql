@@ -1,0 +1,34 @@
+-- =====================================================================
+--  MINDLY — NOTA SOBRE A TABELA challenge_questions
+--  Esta tabela já existe no Supabase com a estrutura abaixo.
+--  NÃO execute nenhum SQL deste arquivo — apenas referência de estrutura.
+-- =====================================================================
+--
+--  Estrutura real da tabela challenge_questions:
+--
+--  CREATE TABLE public.challenge_questions (
+--    id             uuid PRIMARY KEY,
+--    challenge_id   uuid REFERENCES public.challenges(id),
+--    question       text,
+--    option_a       text,
+--    option_b       text,
+--    option_c       text,
+--    option_d       text,
+--    correct_answer text   -- valor esperado: 'a', 'b', 'c' ou 'd'
+--  );
+--
+--  O frontend busca as perguntas via:
+--    SELECT id, question, option_a, option_b, option_c, option_d, correct_answer
+--    FROM challenge_questions
+--    WHERE challenge_id = <uuid do desafio>
+--
+--  Para inserir novas perguntas, use o SQL Editor do Supabase:
+--    INSERT INTO challenge_questions
+--      (challenge_id, question, option_a, option_b, option_c, option_d, correct_answer)
+--    VALUES (
+--      '<uuid do desafio>',
+--      'Texto da pergunta?',
+--      'Opção A', 'Opção B', 'Opção C', 'Opção D',
+--      'a'   -- letra da opção correta (minúscula)
+--    );
+-- =====================================================================
