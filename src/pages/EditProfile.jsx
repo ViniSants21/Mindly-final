@@ -17,6 +17,7 @@ import {
   Star,
   Shield,
 } from "lucide-react";
+import { getAvatarUrl } from "../lib/avatar";
 import "../styles/editprofile.css";
 
 export default function EditProfile() {
@@ -54,9 +55,7 @@ export default function EditProfile() {
     }
   };
 
-  const displayName = name || user?.name || "U";
-  const avatarFallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=3f7fe3&color=fff&size=120&bold=true`;
-  const avatarSrc = photo || avatarFallback;
+  const avatarSrc = getAvatarUrl(photo);
   const roleLabel = user?.role === "admin" ? "Administrador" : "Estudante";
 
   return (
@@ -91,7 +90,7 @@ export default function EditProfile() {
                 src={avatarSrc}
                 alt="avatar"
                 className="ep-avatar"
-                onError={(e) => { e.target.src = avatarFallback; }}
+                onError={(e) => { e.target.src = getAvatarUrl(); }}
               />
               <div className="ep-avatar-overlay">
                 <Camera size={22} />

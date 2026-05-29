@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { getIcon } from "../../lib/icons";
+import { getAvatarUrl } from "../../lib/avatar";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -66,7 +67,7 @@ export default function Navbar() {
             <span className="bell">{getIcon("gift", { size: 20 })}</span>
 
             <img
-              src={user.photo || "https://i.pravatar.cc/40"}
+              src={getAvatarUrl(user.photo)}
               alt="user"
               className="avatar-click"
               onClick={() => setOpen(!open)}

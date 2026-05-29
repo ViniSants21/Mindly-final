@@ -16,6 +16,7 @@ import {
   Award,
   TrendingUp,
 } from "lucide-react";
+import { getAvatarUrl } from "../lib/avatar";
 import "../styles/profile.css";
 
 /* ------------------------------------------------------------------ */
@@ -153,9 +154,8 @@ export default function Profile() {
   const unlockedAch = achievements.filter((a) => a.unlocked);
   const lockedAch   = achievements.filter((a) => !a.unlocked);
 
-  const displayName   = user?.name || "Usuário Mindly";
-  const avatarFallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=3f7fe3&color=fff&size=120&bold=true`;
-  const roleLabel     = user?.role === "admin" ? "Administrador" : "Estudante";
+  const displayName = user?.name || "Usuário Mindly";
+  const roleLabel   = user?.role === "admin" ? "Administrador" : "Estudante";
 
   return (
     <div className="pf-page">
@@ -164,10 +164,10 @@ export default function Profile() {
       <div className="pf-hero-card">
         <div className="pf-hero-left">
           <img
-            src={user?.photo || avatarFallback}
+            src={getAvatarUrl(user?.photo)}
             alt="avatar"
             className="pf-avatar"
-            onError={(e) => { e.target.src = avatarFallback; }}
+            onError={(e) => { e.target.src = getAvatarUrl(); }}
           />
 
           <div className="pf-hero-info">
