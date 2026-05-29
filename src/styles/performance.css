@@ -29,8 +29,9 @@
   font-size: 14px;
 }
 
-.unlocked-banner > span:first-child {
-  font-size: 28px;
+.unlocked-banner-icon {
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
 }
 
@@ -50,19 +51,25 @@
   color: var(--gray-soft);
 }
 
-.unlocked-banner > button {
+.unlocked-banner-close {
   background: none;
   border: none;
-  color: #aaa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  font-size: 16px;
   padding: 4px;
   border-radius: 50%;
-  transition: color 0.15s;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
 }
 
-.unlocked-banner > button:hover {
-  color: var(--navy);
+.unlocked-banner-close:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.unlocked-banner-close:hover svg {
+  color: var(--navy) !important;
 }
 
 /* ================================================================
@@ -186,7 +193,9 @@
 }
 
 .achievement-trophy {
-  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 4px;
 }
 
@@ -217,6 +226,9 @@
   font-size: 11px;
   color: #aaa;
   margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* Card bloqueado */

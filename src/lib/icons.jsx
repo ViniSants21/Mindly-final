@@ -22,6 +22,12 @@ import {
   Flame,
   Brain,
   Lightbulb,
+  Trophy,
+  Calendar,
+  X,
+  BarChart2,
+  Clock,
+  Medal,
 } from "lucide-react";
 
 /**
@@ -58,6 +64,14 @@ export const iconMap = {
   lightning: Zap,
   flame: Flame,
   lightbulb: Lightbulb,
+
+  // Performance / Gamificação
+  trophy: Trophy,
+  calendar: Calendar,
+  close: X,
+  barchart: BarChart2,
+  clock: Clock,
+  medal: Medal,
 };
 
 const DEFAULT_COLOR = "#f59a3c";

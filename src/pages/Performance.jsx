@@ -32,12 +32,17 @@ function AchievementCard({ achievement }) {
   if (unlocked) {
     return (
       <div className="achievement-card active">
-        <div className="achievement-trophy">🏆</div>
+        <div className="achievement-trophy">
+          {getIcon("trophy", { size: 32, color: "#f59a3c" })}
+        </div>
         <h3>{title}</h3>
         <p>{description}</p>
         <span className="achievement-reward">+{reward_coins} moedas</span>
         {formattedDate && (
-          <span className="achievement-date">🗓 {formattedDate}</span>
+          <span className="achievement-date">
+            {getIcon("calendar", { size: 12, color: "#aaa" })}
+            {formattedDate}
+          </span>
         )}
       </div>
     );
@@ -79,7 +84,6 @@ export default function Performance() {
     if (!userId) return;
     setLoading(true);
     try {
-      // Verifica conquistas retroativamente (dados existentes antes da migration)
       const checkResult = await progressService.checkAchievements(userId);
       if (checkResult?.unlocked?.length > 0) {
         setNewlyUnlocked(checkResult.unlocked);
@@ -104,7 +108,6 @@ export default function Performance() {
     load();
   }, [load]);
 
-  // Calcula percentuais para o gráfico de pizza dinâmico
   const total = stats?.total_challenges || 0;
   const completedPct = stats?.completion_rate || 0;
   const inProgressPct = total > 0
@@ -125,16 +128,24 @@ export default function Performance() {
         {/* NOTIFICAÇÃO DE CONQUISTAS RECÉM DESBLOQUEADAS */}
         {newlyUnlocked.length > 0 && (
           <div className="unlocked-banner">
-            <span>🏆</span>
+            <span className="unlocked-banner-icon">
+              {getIcon("trophy", { size: 26, color: "#f59a3c" })}
+            </span>
             <div>
               <strong>Conquistas desbloqueadas!</strong>
               <span>{newlyUnlocked.map((a) => a.title).join(", ")}</span>
             </div>
-            <button onClick={() => setNewlyUnlocked([])}>✕</button>
+            <button
+              onClick={() => setNewlyUnlocked([])}
+              aria-label="Fechar"
+              className="unlocked-banner-close"
+            >
+              {getIcon("close", { size: 16, color: "#aaa" })}
+            </button>
           </div>
         )}
 
-        {/* ===== SEÇÃO 1: VISÃO GERAL (estatísticas reais) ===== */}
+        {/* ===== SEÇÃO 1: VISÃO GERAL ===== */}
         <div className="perf-section">
           <div className="section-title">
             <div className="perf-bar" />
@@ -162,19 +173,19 @@ export default function Performance() {
                 color="#3f7fe3"
               />
               <StatCard
-                icon="🏆"
+                icon={getIcon("trophy", { size: 22 })}
                 value={stats?.unlocked_achievements ?? 0}
                 label="Conquistas"
                 color="#f59a3c"
               />
               <StatCard
-                icon="🔥"
+                icon={getIcon("flame", { size: 22 })}
                 value={stats?.streak ?? 0}
                 label="Dias Consecutivos"
                 color="#e74c3c"
               />
               <StatCard
-                icon="⚡"
+                icon={getIcon("lightning", { size: 22 })}
                 value={stats?.xp ?? 0}
                 label="XP Total"
                 color="#9b59b6"
@@ -186,7 +197,7 @@ export default function Performance() {
                 color="#f59a3c"
               />
               <StatCard
-                icon="📅"
+                icon={getIcon("calendar", { size: 22 })}
                 value={stats?.study_days_this_week ?? 0}
                 label="Dias de Estudo (semana)"
                 color="#1abc9c"
@@ -227,7 +238,6 @@ export default function Performance() {
           </div>
 
           <div className="performance-grid">
-            {/* GRÁFICO REAL baseado em dados do banco */}
             <div className="perf-card chart-card">
               <h3>Progresso Geral</h3>
               {loading ? (
@@ -263,7 +273,6 @@ export default function Performance() {
               )}
             </div>
 
-            {/* PROGRESSO POR DISCIPLINA */}
             <div className="perf-card progress-card">
               <h3>Progresso por Disciplina</h3>
               {loading ? (
@@ -289,7 +298,6 @@ export default function Performance() {
                 ))
               )}
 
-              {/* Métricas adicionais de estudo */}
               {!loading && stats && (
                 <div className="study-extra">
                   <div className="study-stat">
