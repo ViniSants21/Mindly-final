@@ -55,12 +55,21 @@ export function AuthProvider({ children }) {
       })
       .finally(() => mounted && setLoading(false));
 
+    /**
+     * ╔══════════════════════════════════════════════════════════════╗
+     * ║  CORREÇÃO CRÍTICA — NÃO REVERTER                            ║
+     * ║  O Supabase JS v2 faz await callback() internamente antes   ║
+     * ║  de resolver signInWithPassword. Um callback async com      ║
+     * ║  await loadProfile() congela o login indefinidamente.       ║
+     * ║  Solução: callback síncrono + loadProfile fire-and-forget.  ║
+     * ╚══════════════════════════════════════════════════════════════╝
+     */
     const {
       data: { subscription },
-    } = authService.onAuthStateChange(async (_event, s) => {
+    } = authService.onAuthStateChange((_event, s) => {
       setSession(s);
       if (s?.user) {
-        await loadProfile(s.user.id);
+        loadProfile(s.user.id); // intencional: SEM await
       } else {
         setProfile(null);
       }
@@ -79,10 +88,18 @@ export function AuthProvider({ children }) {
     return data;
   }, []);
 
+  /**
+   * Define a sessão explicitamente no estado React antes de retornar,
+   * evitando condição de corrida com navigate() em Login.jsx.
+   */
   const login = useCallback(async ({ email, password }) => {
     const data = await authService.signIn({ email, password });
+    if (data?.session) {
+      setSession(data.session);
+      loadProfile(data.session.user.id); // background, sem await
+    }
     return data;
-  }, []);
+  }, [loadProfile]);
 
   const loginWithGoogle = useCallback(async () => {
     await authService.signInWithGoogle();

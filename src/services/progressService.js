@@ -35,11 +35,20 @@ export const progressService = {
    * exibir barra de progresso nos cards bloqueados).
    */
   async listAchievements(userId) {
-    const [achResult, countResult] = await Promise.all([
+    /**
+     * CORREÇÃO: a versão anterior usava embed de user_achievements sem filtro
+     * de userId, trazendo registros de TODOS os usuários e filtrando em JS.
+     * Nova abordagem: 3 queries paralelas, cada uma filtrada corretamente.
+     */
+    const [achResult, uaResult, countResult] = await Promise.all([
       supabase
         .from("achievements")
-        .select("*, user_achievements(user_id, unlocked_at)")
+        .select("*")
         .order("id", { ascending: true }),
+      supabase
+        .from("user_achievements")
+        .select("achievement_id, unlocked_at")
+        .eq("user_id", userId),
       supabase
         .from("user_challenges")
         .select("id", { count: "exact", head: true })
@@ -48,15 +57,16 @@ export const progressService = {
     ]);
 
     if (achResult.error) throw achResult.error;
+    if (uaResult.error) throw uaResult.error;
 
     const completedCount = countResult.count || 0;
+    const unlockedMap = new Map(
+      (uaResult.data || []).map((u) => [u.achievement_id, u])
+    );
 
-    return achResult.data.map((a) => {
-      const userRecord = (a.user_achievements || []).find(
-        (u) => u.user_id === userId
-      );
+    return (achResult.data || []).map((a) => {
+      const userRecord = unlockedMap.get(a.id);
       const unlocked = !!userRecord;
-      // Progresso percentual em direção à conquista (99% máx se ainda bloqueada)
       const progressPct = unlocked
         ? 100
         : Math.min(
