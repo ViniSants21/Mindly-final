@@ -1,12 +1,5 @@
 import { supabase } from "../lib/supabaseClient";
 
-/**
- * Serviço do Painel Admin.
- *
- * Todas estas operações dependem de o usuário logado ter role = 'admin'.
- * As políticas RLS no banco garantem que apenas admins consigam ler/
- * escrever nestas tabelas (ver supabase/schema.sql).
- */
 export const adminService = {
   // ---------- USUÁRIOS ----------
   async listUsers() {
@@ -55,7 +48,21 @@ export const adminService = {
     return data;
   },
 
-  // ---------- ESTATÍSTICAS / DASHBOARD ----------
+  // ---------- ESTATÍSTICAS COMPLETAS ----------
+  async getFullStats() {
+    const { data, error } = await supabase.rpc("admin_full_stats");
+    if (error) throw error;
+    return data;
+  },
+
+  // ---------- ATIVIDADE RECENTE ----------
+  async getActivity(limit = 8) {
+    const { data, error } = await supabase.rpc("get_admin_activity", { p_limit: limit });
+    if (error) throw error;
+    return data;
+  },
+
+  // ---------- FALLBACK LEGADO ----------
   async getDashboardStats() {
     const { data, error } = await supabase.rpc("admin_dashboard_stats");
     if (error) throw error;
