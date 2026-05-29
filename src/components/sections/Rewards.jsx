@@ -87,25 +87,40 @@ export default function Rewards() {
 
       <div className="rewards-grid">
         {filtered.map((item) => {
-          const isOwned = owned.includes(item.id);
+          const isOwned    = owned.includes(item.id);
+          const canAfford  = coins >= item.price;
+          const isDisabled = isOwned || item.locked || !canAfford;
+          const missing    = item.price - coins;
+
+          let cardClass = "reward-card";
+          if (item.locked)           cardClass += " locked-reward";
+          else if (isOwned)          cardClass += " owned-reward";
+          else if (!canAfford)       cardClass += " cant-afford";
+
+          let btnLabel;
+          if (isOwned)       btnLabel = "✓ Adquirido";
+          else if (item.locked) btnLabel = "🔒 Bloqueado";
+          else if (!canAfford)  btnLabel = `Faltam ${missing} moedas`;
+          else                  btnLabel = `${item.price} moedas`;
+
           return (
-            <div
-              key={item.id}
-              className={`reward-card ${item.locked ? "locked" : ""}`}
-            >
+            <div key={item.id} className={cardClass}>
               <div
                 className="icon"
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
+                style={{ display: "flex", justifyContent: "center", alignItems: "center" }}
               >
                 {getIcon(item.icon, { size: 32 })}
               </div>
               <p>{item.name}</p>
-              <button onClick={() => handleBuy(item)} disabled={isOwned}>
-                {isOwned ? "Adquirido" : `${item.price} moedas`}
+              {!canAfford && !isOwned && !item.locked && (
+                <span className="reward-missing">Você tem {coins} moedas</span>
+              )}
+              <button
+                onClick={() => handleBuy(item)}
+                disabled={isDisabled}
+                className={!canAfford && !isOwned && !item.locked ? "btn-cant-afford" : ""}
+              >
+                {btnLabel}
               </button>
             </div>
           );

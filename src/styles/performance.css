@@ -626,6 +626,31 @@ hr {
   opacity: 0.65;
 }
 
+/* ---- Item já adquirido ---- */
+.reward-card.owned-reward {
+  border-color: rgba(50, 205, 50, 0.35);
+  background: #f8fff9;
+}
+
+/* ---- Saldo insuficiente ---- */
+.reward-card.cant-afford {
+  opacity: 0.72;
+  border-color: rgba(200, 200, 200, 0.5);
+}
+
+.reward-missing {
+  display: block;
+  font-size: 11px;
+  color: var(--gray-soft);
+  margin-bottom: 6px;
+}
+
+.reward-card button.btn-cant-afford {
+  background: #f0f0f0;
+  color: #999;
+  cursor: not-allowed;
+}
+
 /* ================================================================
    TOAST
    ================================================================ */
