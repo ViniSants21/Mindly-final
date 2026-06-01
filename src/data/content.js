@@ -4,9 +4,6 @@
  * O *progresso* do usuário em cada etapa é persistido no Supabase
  * (tabela learning_progress); apenas o conteúdo em si — que é igual
  * para todos — vive aqui no frontend.
- *
- * IDs 1–5 mantidos iguais para compatibilidade com dados existentes.
- * IDs 6–12 são os novos módulos sobre Neurodiversidade.
  */
 
 export const learningPath = [
@@ -89,7 +86,7 @@ export const learningPath = [
     conteudo:
       "A dislexia é uma diferença neurológica que afeta a capacidade de ler e processar linguagem escrita. Pessoas com dislexia podem trocar letras, ler devagar ou ter dificuldade para decodificar palavras — mas isso não tem relação com inteligência. A maioria possui QI normal ou acima da média.\n\nA dislexia é uma das condições mais comuns do espectro da neurodiversidade, afetando entre 5% e 15% da população. Com suporte adequado — como uso de fontes especiais, audiobooks e mais tempo em avaliações — estudantes com dislexia prosperam.\n\nMuitas pessoas disléxicas desenvolvem habilidades extraordinárias de pensamento visual, resolução de problemas e visão do 'todo'.",
     curiosidade:
-      "Albert Einstein, Leonardo da Vinci, Walt Disney e o escritor Agatha Christie são exemplos históricos de pessoas com dislexia que deixaram legados monumentais.",
+      "Albert Einstein, Leonardo da Vinci, Walt Disney e a escritora Agatha Christie são exemplos históricos de pessoas com dislexia que deixaram legados monumentais.",
     exemploPratico:
       "A fonte 'OpenDyslexic', criada especialmente para pessoas com dislexia, modifica o peso das letras para tornar a leitura mais fácil. Muitos e-readers e aplicativos educacionais já a oferecem.",
     dica: "Audiobooks e text-to-speech são ferramentas poderosas para estudantes com dislexia. Ouvir o conteúdo enquanto acompanha o texto acelera a aprendizagem.",

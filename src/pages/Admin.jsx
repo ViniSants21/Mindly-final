@@ -171,6 +171,9 @@ export default function Admin() {
   const [isCreateTrailOpen, setIsCreateTrailOpen] = useState(false);
   const [newTrail, setNewTrail]             = useState({ titulo: "", nivel: "Fácil", tempo: "30 min", xp: 50, icon: "brain", conteudo: "", curiosidade: "", exemploPratico: "", dica: "" });
 
+  // Toggle de status de desafio — rastreia qual está sendo alterado
+  const [togglingChallengeId, setTogglingChallengeId] = useState(null);
+
   // Modals
   const [editUser, setEditUser]             = useState(null);
   const [editChallenge, setEditChallenge]   = useState(null);
@@ -284,13 +287,23 @@ export default function Admin() {
   };
 
   const toggleChallengeStatus = async (c) => {
+    if (togglingChallengeId) return; // impede cliques duplos durante o request
+    const nextStatus = c.status === "Ativo" ? "Suspenso" : "Ativo";
+    setTogglingChallengeId(c.id);
     try {
-      const updated = await challengesService.update(c.id, {
-        status: c.status === "Ativo" ? "Suspenso" : "Ativo",
-      });
+      const updated = await challengesService.setStatus(c.id, nextStatus);
       setChallenges(prev => prev.map(x => x.id === updated.id ? updated : x));
-      showToast("Status do desafio alterado!");
-    } catch (err) { showToast("Erro: " + err.message); }
+      showToast(
+        nextStatus === "Suspenso"
+          ? `Desafio "${c.title}" suspenso com sucesso.`
+          : `Desafio "${c.title}" reativado com sucesso.`
+      );
+    } catch (err) {
+      console.error("[toggleChallengeStatus]", err);
+      showToast("Erro ao alterar status: " + err.message);
+    } finally {
+      setTogglingChallengeId(null);
+    }
   };
 
   const handleSendReply = async () => {
@@ -343,12 +356,12 @@ export default function Admin() {
       return;
     }
     try {
-      const position = trails.length + 1;
-      const created = await trailsService.create({ ...newTrail, position });
+      const maxPos = trails.reduce((max, t) => Math.max(max, t.position || 0), 0);
+      const created = await trailsService.create({ ...newTrail, position: maxPos + 1 });
       setTrails(prev => [...prev, created]);
       setIsCreateTrailOpen(false);
-      setNewTrail({ titulo: "", nivel: "Fácil", tempo: "30 min", xp: 50, icon: "brain", conteudo: "", curiosidade: "", exemploPratico: "", dica: "" });
-      showToast("Módulo de trilha criado!");
+      setNewTrail({ titulo: "", nivel: "Fácil", tempo: "30 min", xp: 50, icon: "brain", conteudo: "", curiosidade: "", exemploPratico: "", dica: "", status: "Ativo" });
+      showToast("Módulo criado!");
     } catch (err) { showToast("Erro: " + err.message); }
   };
 
@@ -368,6 +381,33 @@ export default function Admin() {
       setTrails(prev => prev.filter(t => t.id !== id));
       showToast("Módulo removido.");
     } catch (err) { showToast("Erro: " + err.message); }
+  };
+
+  const toggleTrailStatus = async (trail) => {
+    try {
+      const updated = await trailsService.toggleStatus(trail.id, trail.status);
+      setTrails(prev => prev.map(t => t.id === updated.id ? updated : t));
+      showToast(updated.status === "Ativo" ? "Módulo ativado!" : "Módulo desativado.");
+    } catch (err) { showToast("Erro: " + err.message); }
+  };
+
+  const moveTrail = async (trail, direction) => {
+    const sorted = [...trails].sort((a, b) => a.position - b.position);
+    const idx = sorted.findIndex(t => t.id === trail.id);
+    const swapIdx = idx + direction;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    const neighbor = sorted[swapIdx];
+    try {
+      const [updA, updB] = await Promise.all([
+        trailsService.updatePosition(trail.id, neighbor.position),
+        trailsService.updatePosition(neighbor.id, trail.position),
+      ]);
+      setTrails(prev => prev.map(t => {
+        if (t.id === updA.id) return { ...t, position: updA.position };
+        if (t.id === updB.id) return { ...t, position: updB.position };
+        return t;
+      }));
+    } catch (err) { showToast("Erro ao reordenar: " + err.message); }
   };
 
   /* ── Filtered data ── */
@@ -714,32 +754,50 @@ export default function Admin() {
               </tr>
             </thead>
             <tbody>
-              {filteredChallenges.map(c => (
-                <tr key={c.id}>
+              {filteredChallenges.map(c => {
+                const isToggling = togglingChallengeId === c.id;
+                return (
+                <tr key={c.id} style={{ opacity: isToggling ? 0.65 : 1, transition: "opacity .2s" }}>
                   <td style={{ textAlign: "center" }}>{getIcon(c.icon, { size: 26 })}</td>
                   <td><strong>{c.title}</strong></td>
                   <td className="adm-td-muted">{c.description || "—"}</td>
                   <td>
-                    <span className={`adm-badge ${c.status === "Ativo" ? "adm-badge-active" : "adm-badge-inactive"}`}>
-                      {c.status}
+                    <span className={`adm-badge ${c.status === "Ativo" ? "adm-badge-active" : "adm-badge-inactive"}`}
+                      style={{ fontWeight: 700, fontSize: 12 }}>
+                      {isToggling ? "Atualizando…" : c.status}
                     </span>
                   </td>
                   <td>
                     <div className="adm-actions">
-                      <button className="adm-btn adm-btn-ghost" onClick={() => setEditChallenge(c)}>Editar</button>
+                      <button
+                        className="adm-btn adm-btn-ghost"
+                        onClick={() => setEditChallenge(c)}
+                        disabled={isToggling}
+                      >
+                        Editar
+                      </button>
                       <button
                         className={`adm-btn ${c.status === "Ativo" ? "adm-btn-warn" : "adm-btn-success"}`}
                         onClick={() => toggleChallengeStatus(c)}
+                        disabled={isToggling}
+                        title={c.status === "Ativo" ? "Suspender este desafio" : "Reativar este desafio"}
                       >
-                        {c.status === "Ativo" ? "Suspender" : "Reativar"}
+                        {isToggling
+                          ? "Aguarde…"
+                          : c.status === "Ativo" ? "Suspender" : "Reativar"
+                        }
                       </button>
-                      <button className="adm-btn adm-btn-danger" onClick={() => deleteChallenge(c.id)}>
+                      <button
+                        className="adm-btn adm-btn-danger"
+                        onClick={() => deleteChallenge(c.id)}
+                        disabled={isToggling}
+                      >
                         Apagar
                       </button>
                     </div>
                   </td>
                 </tr>
-              ))}
+              );})}
             </tbody>
           </table>
         </div>
@@ -899,14 +957,20 @@ export default function Admin() {
   );
 
   /* ═══════════════════════════════════════
-     TRAILS PANEL
+     TRAILS PANEL — CRUD completo com status e reordenação
   ═══════════════════════════════════════ */
-  const TrailsPanel = () => (
+  const TrailsPanel = () => {
+    const sorted = [...filteredTrails].sort((a, b) => a.position - b.position);
+    const allSorted = [...trails].sort((a, b) => a.position - b.position);
+    return (
     <div className="adm-panel">
       <div className="adm-panel-header">
         <div>
           <h2>Trilhas de Aprendizagem</h2>
-          <span className="adm-panel-count">{filteredTrails.length} módulos</span>
+          <span className="adm-panel-count">
+            {trails.filter(t => t.status === "Ativo").length} ativos ·{" "}
+            {trails.filter(t => t.status === "Inativo").length} inativos
+          </span>
         </div>
         <div className="adm-panel-actions">
           <div className="adm-search-wrap">
@@ -922,9 +986,9 @@ export default function Admin() {
 
       {loadingMain ? (
         <div className="adm-table-skeleton">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} h={52} r={6} />)}
+          {[...Array(5)].map((_, i) => <Skeleton key={i} h={52} r={6} />)}
         </div>
-      ) : filteredTrails.length === 0 ? (
+      ) : sorted.length === 0 ? (
         <p className="adm-empty-mini" style={{ padding: "32px", textAlign: "center" }}>
           Nenhum módulo encontrado. Clique em "+ Criar Módulo" para adicionar.
         </p>
@@ -933,19 +997,44 @@ export default function Admin() {
           <table className="adm-table">
             <thead>
               <tr>
-                <th>Ícone</th>
+                <th style={{ width: 60 }}>Ordem</th>
+                <th style={{ width: 40 }}>Ícone</th>
                 <th>Título</th>
                 <th>Nível</th>
                 <th>Tempo</th>
                 <th>XP</th>
+                <th>Status</th>
                 <th>Ações</th>
               </tr>
             </thead>
             <tbody>
-              {filteredTrails.map(t => (
-                <tr key={t.id}>
+              {sorted.map((t, idx) => {
+                const globalIdx = allSorted.findIndex(x => x.id === t.id);
+                return (
+                <tr key={t.id} style={{ opacity: t.status === "Inativo" ? 0.6 : 1 }}>
+                  <td>
+                    <div className="adm-actions" style={{ gap: 2 }}>
+                      <button
+                        className="adm-btn adm-btn-ghost"
+                        style={{ padding: "4px 7px", fontSize: 11 }}
+                        onClick={() => moveTrail(t, -1)}
+                        disabled={globalIdx === 0}
+                        title="Mover para cima"
+                      >▲</button>
+                      <button
+                        className="adm-btn adm-btn-ghost"
+                        style={{ padding: "4px 7px", fontSize: 11 }}
+                        onClick={() => moveTrail(t, 1)}
+                        disabled={globalIdx === allSorted.length - 1}
+                        title="Mover para baixo"
+                      >▼</button>
+                    </div>
+                  </td>
                   <td style={{ textAlign: "center" }}>{getIcon(t.icon, { size: 22 })}</td>
-                  <td><strong>{t.titulo}</strong></td>
+                  <td>
+                    <strong style={{ fontSize: 13 }}>{t.titulo}</strong>
+                    <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>ID: {t.id} · Pos: {t.position}</div>
+                  </td>
                   <td>
                     <span className={`adm-badge ${t.nivel === "Fácil" ? "adm-badge-active" : t.nivel === "Médio" ? "adm-badge-warn" : "adm-badge-level"}`}>
                       {t.nivel}
@@ -954,11 +1043,20 @@ export default function Admin() {
                   <td className="adm-td-muted">{t.tempo}</td>
                   <td><strong style={{ color: "#f59a3c" }}>{t.xp} XP</strong></td>
                   <td>
+                    <span className={`adm-badge ${t.status === "Ativo" ? "adm-badge-active" : "adm-badge-inactive"}`}>
+                      {t.status}
+                    </span>
+                  </td>
+                  <td>
                     <div className="adm-actions">
-                      <button className="adm-btn adm-btn-ghost" onClick={() => setEditTrail({
-                        ...t, exemploPratico: t.exemplo_pratico || t.exemploPratico || ""
-                      })}>
+                      <button className="adm-btn adm-btn-ghost"
+                        onClick={() => setEditTrail({ ...t, exemploPratico: t.exemploPratico || "" })}>
                         <Pencil size={13} /> Editar
+                      </button>
+                      <button
+                        className={`adm-btn ${t.status === "Ativo" ? "adm-btn-warn" : "adm-btn-success"}`}
+                        onClick={() => toggleTrailStatus(t)}>
+                        {t.status === "Ativo" ? "Desativar" : "Ativar"}
                       </button>
                       <button className="adm-btn adm-btn-danger" onClick={() => deleteTrail(t.id)}>
                         <Trash2 size={13} /> Apagar
@@ -966,13 +1064,13 @@ export default function Admin() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              );})}
             </tbody>
           </table>
         </div>
       )}
     </div>
-  );
+  );};
 
   const renderPanel = () => {
     switch (activeTab) {

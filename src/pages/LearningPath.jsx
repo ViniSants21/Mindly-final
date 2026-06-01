@@ -4,7 +4,7 @@ import { progressService } from "../services/progressService";
 import { learningPath } from "../data/content";
 import { getIcon } from "../lib/icons";
 import {
-  CheckCircle, Lock, ChevronRight, ChevronLeft,
+  CheckCircle, ChevronRight, ChevronLeft,
   Volume2, Clock, Zap, BookOpen, Info, Lightbulb, FlaskConical,
 } from "lucide-react";
 import "../styles/learningpath.css";
@@ -57,7 +57,6 @@ export default function LearningPath() {
       setConcluidas(prev => [...prev, etapa.id]);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-      // Atualiza XP/nível no contexto global para refletir imediatamente na navbar
       await refreshProfile();
     } catch (err) {
       console.error(err.message);

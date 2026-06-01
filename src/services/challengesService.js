@@ -29,14 +29,19 @@ export const challengesService = {
     return data;
   },
 
-  /** Progresso do usuário em todos os desafios (com dados do desafio). */
+  /**
+   * Progresso do usuário — apenas desafios com status "Ativo".
+   * Desafios suspensos são filtrados aqui para não aparecer na página do aluno.
+   * O registro de user_challenges permanece no banco (progresso preservado);
+   * ele só fica invisível enquanto o desafio estiver suspenso.
+   */
   async listUserProgress(userId) {
     const { data, error } = await supabase
       .from("user_challenges")
       .select("*, challenge:challenges(*)")
       .eq("user_id", userId);
     if (error) throw error;
-    return data;
+    return (data ?? []).filter(uc => uc.challenge?.status === "Ativo");
   },
 
   /**
@@ -140,14 +145,71 @@ export const challengesService = {
     return data;
   },
 
+  /**
+   * Atualiza campos gerais de um desafio (título, descrição, ícone, etc.).
+   * UPDATE e SELECT são separados para evitar falhas silenciosas do RETURNING
+   * quando políticas RLS sobrepõem o SELECT pós-update.
+   */
   async update(challengeId, updates) {
-    const { data, error } = await supabase
+    const { error: updateError } = await supabase
       .from("challenges")
       .update(updates)
+      .eq("id", challengeId);
+    if (updateError) throw updateError;
+
+    const { data, error: fetchError } = await supabase
+      .from("challenges")
+      .select("*")
       .eq("id", challengeId)
-      .select()
       .single();
-    if (error) throw error;
+    if (fetchError) throw fetchError;
+    return data;
+  },
+
+  /**
+   * Altera apenas o status de um desafio (Ativo ↔ Suspenso).
+   * Método dedicado com validação explícita do valor — evita que um toggle
+   * incorreto envie um valor fora do CHECK constraint do banco.
+   */
+  async setStatus(challengeId, status) {
+    if (status !== "Ativo" && status !== "Suspenso") {
+      throw new Error(
+        `Status inválido: "${status}". Valores permitidos: "Ativo" ou "Suspenso".`
+      );
+    }
+
+    // Passo 1 — executa o UPDATE sem encadear .select()
+    const { error: updateError } = await supabase
+      .from("challenges")
+      .update({ status })
+      .eq("id", challengeId);
+
+    if (updateError) {
+      throw new Error(
+        `Erro ao atualizar status (${status}): ${updateError.message}`
+      );
+    }
+
+    // Passo 2 — busca separada para confirmar e retornar o registro atualizado
+    const { data, error: fetchError } = await supabase
+      .from("challenges")
+      .select("*")
+      .eq("id", challengeId)
+      .single();
+
+    if (fetchError) {
+      throw new Error(
+        `Status atualizado no banco, mas falha ao recarregar: ${fetchError.message}`
+      );
+    }
+
+    if (data.status !== status) {
+      throw new Error(
+        `O banco retornou status "${data.status}" mas o esperado era "${status}". ` +
+        `Verifique se há triggers ou policies RLS bloqueando a alteração.`
+      );
+    }
+
     return data;
   },
 
