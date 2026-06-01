@@ -542,6 +542,80 @@
 }
 
 /* ================================================================
+   BOOST BAR — indicadores no topo da página de desafios
+   ================================================================ */
+.challenge-boost-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.challenge-boost-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  animation: fadeIn 0.3s ease;
+  white-space: nowrap;
+}
+
+.challenge-boost-pill.boost  { background: rgba(155,89,182,.12); color: #9b59b6; border: 1.5px solid rgba(155,89,182,.4); }
+.challenge-boost-pill.shield { background: rgba(63,127,227,.12); color: var(--blue); border: 1.5px solid rgba(63,127,227,.4); }
+.challenge-boost-pill.hint   { background: rgba(245,154,60,.12); color: var(--orange-dark); border: 1.5px solid rgba(245,154,60,.4); }
+
+/* ================================================================
+   LINHA DE AÇÃO (confirmar + dica) no modal
+   ================================================================ */
+.modal-action-row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  margin-top: 14px;
+}
+
+.modal-action-row .submit-btn {
+  flex: 1;
+  margin-top: 0;
+}
+
+.hint-btn {
+  flex-shrink: 0;
+  padding: 13px 16px;
+  background: rgba(245, 154, 60, 0.1);
+  color: var(--orange-dark);
+  border: 1.5px solid rgba(245, 154, 60, 0.4);
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+  white-space: nowrap;
+}
+
+.hint-btn:hover {
+  background: rgba(245, 154, 60, 0.18);
+  transform: translateY(-1px);
+}
+
+/* Dica exibida dentro do modal */
+.hint-display {
+  background: linear-gradient(135deg, #fff8f0, #fff3e0);
+  border: 1.5px solid rgba(245, 154, 60, 0.4);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--navy);
+  line-height: 1.5;
+  margin-bottom: 10px;
+  text-align: left;
+  animation: fadeIn 0.3s ease;
+}
+
+/* ================================================================
    TELA DE CONCLUSÃO DO DESAFIO
    ================================================================ */
 .challenge-complete {

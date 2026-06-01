@@ -4,6 +4,32 @@ import { useAuth } from "../../context/AuthContext";
 import { getIcon } from "../../lib/icons";
 import { getAvatarUrl } from "../../lib/avatar";
 
+/* ─── Contador regressivo exibido na navbar ─── */
+function NavBoostTimer({ expiresAt, label, color }) {
+  const [timeLeft, setTimeLeft] = useState(0);
+
+  useEffect(() => {
+    const calc = () => Math.max(0, Math.floor((new Date(expiresAt) - Date.now()) / 1000));
+    setTimeLeft(calc());
+    const iv = setInterval(() => {
+      const t = calc();
+      setTimeLeft(t);
+      if (t <= 0) clearInterval(iv);
+    }, 1000);
+    return () => clearInterval(iv);
+  }, [expiresAt]);
+
+  if (timeLeft <= 0) return null;
+  const m = Math.floor(timeLeft / 60);
+  const s = timeLeft % 60;
+
+  return (
+    <div className="nav-boost-badge" style={{ "--badge-color": color }} title={label}>
+      {label} {m}:{s.toString().padStart(2, "0")}
+    </div>
+  );
+}
+
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -64,6 +90,13 @@ export default function Navbar() {
       <div className="user" ref={menuRef}>
         {user ? (
           <>
+            {/* Indicadores de boost/shield ativos */}
+            {user.xp_boost_expires_at && new Date(user.xp_boost_expires_at) > Date.now() && (
+              <NavBoostTimer expiresAt={user.xp_boost_expires_at} label="⚡" color="#9b59b6" />
+            )}
+            {user.xp_shield_expires_at && new Date(user.xp_shield_expires_at) > Date.now() && (
+              <NavBoostTimer expiresAt={user.xp_shield_expires_at} label="🛡️" color="#3f7fe3" />
+            )}
             <span className="bell">{getIcon("gift", { size: 20 })}</span>
 
             <img

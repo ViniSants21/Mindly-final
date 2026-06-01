@@ -106,6 +106,27 @@ button {
   }
 }
 
+/* =====================================================================
+   BOOST BADGE — Navbar (boost/shield ativo)
+   ===================================================================== */
+.nav-boost-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--badge-color, #9b59b6) 12%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--badge-color, #9b59b6) 50%, transparent);
+  color: var(--badge-color, #9b59b6);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-title);
+  letter-spacing: 0.3px;
+  animation: fadeIn 0.3s ease;
+  cursor: default;
+  white-space: nowrap;
+}
+
 /* ---- Botões utilitários ---- */
 .btn-primary {
   background: var(--blue);

@@ -7,7 +7,7 @@ import { useToast } from "../hooks/useToast";
 import "../styles/challenges.css";
 
 export default function Challenges() {
-  const { session, refreshProfile } = useAuth();
+  const { session, user, refreshProfile } = useAuth();
   const userId = session?.user?.id;
 
   const [progressMap, setProgressMap] = useState([]);
@@ -18,9 +18,9 @@ export default function Challenges() {
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [pendingChallenge, setPendingChallenge] = useState(null);
+  const [hintText, setHintText] = useState(null);
   const modalRef = useRef(null);
   const lastQuestionRef = useRef({});
-  // Controla se o modal já foi fechado (para evitar setState em componente desmontado)
   const mountedRef = useRef(true);
 
   const { message: toastMsg, showToast } = useToast(4000);
@@ -35,9 +35,7 @@ export default function Challenges() {
     setLoading(true);
     try {
       const active = await challengesService.listActive();
-      await Promise.all(
-        active.map((c) => challengesService.ensureProgress(userId, c.id))
-      );
+      await Promise.all(active.map((c) => challengesService.ensureProgress(userId, c.id)));
       const prog = await challengesService.listUserProgress(userId);
       if (mountedRef.current) setProgressMap(prog);
     } catch (err) {
@@ -47,9 +45,7 @@ export default function Challenges() {
     }
   }, [userId]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
     if (activeGame && modalRef.current) {
@@ -60,36 +56,29 @@ export default function Challenges() {
   const ongoing   = progressMap.filter((p) => p.progress < 100);
   const completed = progressMap.filter((p) => p.progress >= 100);
 
-  /* ─── Helper: busca e sorteia uma pergunta para o desafio ─── */
   const fetchNextQuestion = useCallback(async (challengeId, challengeTitle) => {
     const questions = await challengesService.getQuestionsForChallenge(challengeId);
     if (!questions?.length) return null;
 
     const lastId = lastQuestionRef.current[challengeId];
-    const pool = questions.length > 1
-      ? questions.filter((q) => q.id !== lastId)
-      : questions;
-
+    const pool = questions.length > 1 ? questions.filter((q) => q.id !== lastId) : questions;
     const chosen = pool[Math.floor(Math.random() * pool.length)];
     lastQuestionRef.current[challengeId] = chosen.id;
 
     return { ...chosen, reward: 15, challengeId, challengeTitle };
   }, []);
 
-  /* ─── Abre o modal carregando a primeira pergunta do desafio ─── */
   const openGame = async (progressEntry) => {
     setPendingChallenge(progressEntry.challenge_id);
     setMessage("");
     setAnswer("");
+    setHintText(null);
     try {
       const next = await fetchNextQuestion(
         progressEntry.challenge_id,
         progressEntry.challenge?.title
       );
-      if (!next) {
-        showToast("⚠️ Nenhuma pergunta disponível para este desafio.");
-        return;
-      }
+      if (!next) { showToast("⚠️ Nenhuma pergunta disponível para este desafio."); return; }
       setActiveGame(next);
     } catch (err) {
       console.error("Erro ao carregar perguntas:", err.message);
@@ -103,17 +92,38 @@ export default function Challenges() {
     setActiveGame(null);
     setMessage("");
     setAnswer("");
+    setHintText(null);
   };
 
-  /* ─── Valida resposta, salva progresso e avança para a próxima pergunta ─── */
-  const checkAnswer = async () => {
-    if (!activeGame || submitting) return;
+  /* ─── Usa dica da pergunta atual ─── */
+  const handleUseHint = async () => {
+    if (!userId || !activeGame) return;
 
-    // ─── 1. Verificar se é tela de conclusão — apenas fecha o modal ───
-    if (activeGame._isCompletion) {
-      closeModal();
+    if ((user?.hints_count ?? 0) <= 0) {
+      showToast("💡 Você não tem dicas. Compre na loja de Recompensas!");
       return;
     }
+
+    try {
+      const res = await challengesService.useHint(userId);
+      if (!res?.success) { showToast(res?.message || "Erro ao usar dica."); return; }
+
+      // Usa a dica específica da pergunta, ou uma dica de raciocínio genérica
+      const specificHint = activeGame.hint_text || activeGame.hint;
+      setHintText(
+        specificHint ||
+        "Releia cada opção com atenção. Elimine as que claramente contradizem o enunciado e concentre-se nas que restam."
+      );
+      await refreshProfile();
+    } catch (err) {
+      showToast("Erro ao usar dica: " + err.message);
+    }
+  };
+
+  /* ─── Valida resposta, aplica XP e avança ─── */
+  const checkAnswer = async () => {
+    if (!activeGame || submitting) return;
+    if (activeGame._isCompletion) { closeModal(); return; }
 
     let correct = false;
 
@@ -130,79 +140,78 @@ export default function Challenges() {
         correct = selectedText === dbAnswer;
       }
     } else {
-      const correctValue = (activeGame.answer ?? "").trim().toLowerCase();
-      correct = answer.trim().toLowerCase() === correctValue;
+      correct = answer.trim().toLowerCase() === (activeGame.answer ?? "").trim().toLowerCase();
     }
 
-    // ─── 2. Resposta ERRADA ───
+    // ─── RESPOSTA ERRADA ───
     if (!correct) {
-      setMessage("❌ Errou! Tente novamente.");
       setAnswer("");
+
+      if (activeGame.challengeId && userId) {
+        // Desconta 10 XP (ou mostra que o escudo está ativo)
+        try {
+          const result = await challengesService.deductXpOnWrong(userId);
+          await refreshProfile();
+          if (result?.shield_active) {
+            setMessage("🛡️ Errou, mas a Proteção te salvou! Tente novamente.");
+          } else {
+            setMessage(`❌ Errou! −10 XP. Tente novamente.`);
+          }
+        } catch {
+          setMessage("❌ Errou! Tente novamente.");
+        }
+      } else {
+        setMessage("❌ Errou! Tente novamente.");
+      }
+
       setTimeout(() => { if (mountedRef.current) setMessage(""); }, 2500);
       return;
     }
 
-    // ─── 3. Resposta CERTA ───
+    // ─── RESPOSTA CERTA ───
     setMessage("✅ Acertou!!");
     setAnswer("");
+    setHintText(null);
 
     if (!activeGame.challengeId || !userId) {
-      // Jogo de prática: apenas limpa a mensagem após 2,5s
       setTimeout(() => { if (mountedRef.current) setMessage(""); }, 2500);
       return;
     }
 
-    // ─── 4. Salvar progresso no banco ───
     const challengeId    = activeGame.challengeId;
     const challengeTitle = activeGame.challengeTitle;
 
     setSubmitting(true);
     try {
       const result = await challengesService.addProgress(
-        userId,
-        challengeId,
-        activeGame.reward ?? 15
+        userId, challengeId, activeGame.reward ?? 15
       );
 
-      // Conquistas desbloqueadas nesta jogada
       const unlocked = result?.newly_unlocked || [];
-      unlocked.forEach((ach) => {
-        showToast(
-          `🏆 Conquista desbloqueada: "${ach.title}"! +${ach.reward_coins} moedas`
-        );
-      });
+      unlocked.forEach((ach) => showToast(`🏆 Conquista: "${ach.title}"! +${ach.reward_coins} moedas`));
 
-      // Recarrega dados em paralelo (progresso + perfil do usuário)
+      if (result?.xp_multiplier === 2) {
+        showToast(`⚡ Dobra XP ativo! +${result.xp_gained} XP`);
+      }
+
       await Promise.all([load(), refreshProfile()]);
 
-      // Novo progresso retornado pelo banco
-      const newProgress =
-        typeof result === "number" ? result : (result?.progress ?? 0);
+      const newProgress = typeof result === "number" ? result : (result?.progress ?? 0);
 
-      // ─── 5. Após 1,5s de feedback, avançar para próxima pergunta ou concluir ───
       setTimeout(async () => {
         if (!mountedRef.current) return;
         setMessage("");
 
         if (newProgress >= 100) {
-          // ─── Desafio concluído ───
-          setActiveGame({
-            _isCompletion: true,
-            challengeId,
-            challengeTitle,
-          });
+          setActiveGame({ _isCompletion: true, challengeId, challengeTitle });
         } else {
-          // ─── Carregar próxima pergunta automaticamente ───
           try {
             const next = await fetchNextQuestion(challengeId, challengeTitle);
             if (!mountedRef.current) return;
-            if (!next) {
-              closeModal();
-              return;
-            }
+            if (!next) { closeModal(); return; }
             setActiveGame(next);
           } catch (err) {
-            console.error("Erro ao avançar pergunta:", err.message);
+            console.error("Erro ao avançar:", err.message);
             if (mountedRef.current) closeModal();
           }
         }
@@ -211,7 +220,7 @@ export default function Challenges() {
     } catch (err) {
       console.error("Erro ao salvar progresso:", err.message);
       if (mountedRef.current) {
-        setMessage("❌ Erro ao salvar progresso. Tente novamente.");
+        setMessage("❌ Erro ao salvar progresso.");
         setTimeout(() => { if (mountedRef.current) setMessage(""); }, 2500);
       }
     } finally {
@@ -219,8 +228,14 @@ export default function Challenges() {
     }
   };
 
-  const isDbQuestion   = Boolean(activeGame?.question);
-  const isCompletion   = Boolean(activeGame?._isCompletion);
+  const isDbQuestion = Boolean(activeGame?.question);
+  const isCompletion = Boolean(activeGame?._isCompletion);
+
+  const hintsCount     = user?.hints_count ?? 0;
+  const hasHint        = Boolean(activeGame?.hint_text || activeGame?.hint);
+  const canUseHint     = isDbQuestion && hintsCount > 0 && hasHint && !hintText;
+  const boostActive    = user?.xp_boost_expires_at && new Date(user.xp_boost_expires_at) > Date.now();
+  const shieldActive   = user?.xp_shield_expires_at && new Date(user.xp_shield_expires_at) > Date.now();
 
   return (
     <section className="challenges">
@@ -230,14 +245,17 @@ export default function Challenges() {
         <div className="challenges-title">
           {getIcon("target", { size: 32, color: "#3f7fe3" })}
           <h1>Trilha de Aprendizagem</h1>
+          {/* Indicadores de boost ativos */}
+          <div className="challenge-boost-bar">
+            {boostActive && <span className="challenge-boost-pill boost">⚡ Dobra XP</span>}
+            {shieldActive && <span className="challenge-boost-pill shield">🛡️ Proteção</span>}
+            {hintsCount > 0 && <span className="challenge-boost-pill hint">💡 {hintsCount} dica{hintsCount !== 1 ? "s" : ""}</span>}
+          </div>
         </div>
 
         {/* DESAFIOS EM ANDAMENTO */}
         <div className="challenges-section">
-          <h2>
-            <span className="section-bar" />
-            Desafios em andamento
-          </h2>
+          <h2><span className="section-bar" />Desafios em andamento</h2>
           <div className="challenges-list">
             {loading ? (
               <div className="empty-state">Carregando desafios…</div>
@@ -250,9 +268,7 @@ export default function Challenges() {
               ongoing.map((p) => (
                 <div key={p.id} className="challenge-card ongoing">
                   <div className="challenge-left">
-                    <div className="challenge-icon">
-                      {getIcon(p.challenge?.icon, { size: 26 })}
-                    </div>
+                    <div className="challenge-icon">{getIcon(p.challenge?.icon, { size: 26 })}</div>
                     <div className="challenge-info">
                       <h3>{p.challenge?.title}</h3>
                       <p>{p.challenge?.description}</p>
@@ -284,10 +300,7 @@ export default function Challenges() {
 
         {/* DESAFIOS CONCLUÍDOS */}
         <div className="challenges-section">
-          <h2>
-            <span className="section-bar" />
-            Desafios concluídos
-          </h2>
+          <h2><span className="section-bar" />Desafios concluídos</h2>
           <div className="challenges-list">
             {completed.length === 0 ? (
               <div className="empty-state">
@@ -298,9 +311,7 @@ export default function Challenges() {
               completed.map((p) => (
                 <div key={p.id} className="challenge-card completed">
                   <div className="challenge-left">
-                    <div className="challenge-icon completed-icon">
-                      {getIcon(p.challenge?.icon, { size: 26 })}
-                    </div>
+                    <div className="challenge-icon completed-icon">{getIcon(p.challenge?.icon, { size: 26 })}</div>
                     <div className="challenge-info">
                       <h3>{p.challenge?.title}</h3>
                       <p>{p.challenge?.description}</p>
@@ -326,16 +337,11 @@ export default function Challenges() {
 
         {/* JOGOS DE PRÁTICA */}
         <div className="challenges-section">
-          <h2>
-            <span className="section-bar" />
-            Jogos de Prática
-          </h2>
+          <h2><span className="section-bar" />Jogos de Prática</h2>
           <div className="games-grid">
             {games.map((game) => (
               <div key={game.id} className="game-card">
-                <div className="game-card-icon">
-                  {getIcon("lightning", { size: 28, color: "#f59a3c" })}
-                </div>
+                <div className="game-card-icon">{getIcon("lightning", { size: 28, color: "#f59a3c" })}</div>
                 <h3>{game.title}</h3>
                 <p>{game.description}</p>
                 <button className="game-btn" onClick={() => setActiveGame(game)}>Jogar</button>
@@ -345,7 +351,7 @@ export default function Challenges() {
         </div>
       </div>
 
-      {/* MODAL — pergunta (banco / prática) OU tela de conclusão */}
+      {/* MODAL */}
       {activeGame && (
         <div
           className="game-overlay"
@@ -366,9 +372,7 @@ export default function Challenges() {
                 <p className="challenge-complete-msg">
                   Parabéns! Você completou todas as perguntas deste desafio.
                 </p>
-                <button className="submit-btn" onClick={closeModal}>
-                  Fechar
-                </button>
+                <button className="submit-btn" onClick={closeModal}>Fechar</button>
               </div>
             ) : (
               <>
@@ -377,14 +381,18 @@ export default function Challenges() {
                 </div>
 
                 {isDbQuestion ? (
-                  /* Pergunta do banco — múltipla escolha */
                   <>
                     {activeGame.challengeTitle && (
-                      <div className="question-challenge-label">
-                        {activeGame.challengeTitle}
-                      </div>
+                      <div className="question-challenge-label">{activeGame.challengeTitle}</div>
                     )}
                     <h2 className="question-text">{activeGame.question}</h2>
+
+                    {/* Dica exibida */}
+                    {hintText && (
+                      <div className="hint-display">
+                        💡 <strong>Dica:</strong> {hintText}
+                      </div>
+                    )}
 
                     <div className="options-list">
                       {["a", "b", "c", "d"].map((key) =>
@@ -403,13 +411,13 @@ export default function Challenges() {
                     </div>
                   </>
                 ) : (
-                  /* Jogo de prática — texto livre */
                   <>
                     <h2>{activeGame.title}</h2>
                     <p>{activeGame.prompt}</p>
-                    {activeGame.hint && (
+                    {(activeGame.hint || hintText) && !hintText && (
                       <div className="hint">💡 {activeGame.hint}</div>
                     )}
+                    {hintText && <div className="hint-display">💡 <strong>Dica:</strong> {hintText}</div>}
                     <input
                       placeholder="Sua resposta"
                       value={answer}
@@ -421,13 +429,23 @@ export default function Challenges() {
                   </>
                 )}
 
-                <button
-                  className="submit-btn"
-                  onClick={checkAnswer}
-                  disabled={submitting || !answer.trim()}
-                >
-                  {submitting ? "Verificando…" : "Confirmar Resposta"}
-                </button>
+                {/* Linha de ação: confirmar + usar dica */}
+                <div className="modal-action-row">
+                  <button
+                    className="submit-btn"
+                    onClick={checkAnswer}
+                    disabled={submitting || !answer.trim()}
+                    style={{ flex: canUseHint ? "1" : "unset", width: canUseHint ? "auto" : "100%" }}
+                  >
+                    {submitting ? "Verificando…" : "Confirmar Resposta"}
+                  </button>
+
+                  {canUseHint && (
+                    <button className="hint-btn" onClick={handleUseHint} title="Usar dica">
+                      💡 Dica ({hintsCount})
+                    </button>
+                  )}
+                </div>
 
                 {message && (
                   <div className={`game-message ${message.startsWith("✅") ? "correct" : "wrong"}`}>
@@ -440,7 +458,6 @@ export default function Challenges() {
         </div>
       )}
 
-      {/* TOAST DE CONQUISTA */}
       {toastMsg && <div className="achievement-toast">{toastMsg}</div>}
     </section>
   );

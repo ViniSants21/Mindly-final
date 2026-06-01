@@ -162,7 +162,7 @@ export default function Admin() {
   const [questionFilter, setQuestionFilter]       = useState("");
   const [editQuestion, setEditQuestion]           = useState(null);
   const [isCreateQuestionOpen, setIsCreateQuestionOpen] = useState(false);
-  const [newQuestion, setNewQuestion]             = useState({ challenge_id: "", question: "", option_a: "", option_b: "", option_c: "", option_d: "", correct_answer: "a" });
+  const [newQuestion, setNewQuestion]             = useState({ challenge_id: "", question: "", option_a: "", option_b: "", option_c: "", option_d: "", correct_answer: "a", hint_text: "" });
 
   // Trails state
   const [trails, setTrails]                 = useState([]);
@@ -442,7 +442,7 @@ export default function Admin() {
     { key: "Usuários",  icon: <Users size={18} />,           label: "Usuários" },
     { key: "Desafios",  icon: <Target size={18} />,          label: "Desafios" },
     { key: "Perguntas", icon: <HelpCircle size={18} />,      label: "Perguntas" },
-    { key: "Trilhas",   icon: <BookOpen size={18} />,        label: "Trilhas" },
+
     { key: "Tickets",   icon: <MessageSquare size={18} />,   label: "Tickets" },
   ];
 
@@ -1077,7 +1077,7 @@ export default function Admin() {
       case "Usuários":  return <UsersPanel />;
       case "Desafios":  return <ChallengesPanel />;
       case "Perguntas": return <QuestionsPanel />;
-      case "Trilhas":   return <TrailsPanel />;
+     
       case "Tickets":   return <TicketsPanel />;
       default:          return <DashboardPanel />;
     }
@@ -1300,6 +1300,11 @@ export default function Admin() {
               <option value="c">C</option>
               <option value="d">D</option>
             </select>
+            <label className="adm-label">Dica (opcional — para a recompensa Dica)</label>
+            <textarea className="adm-input" rows={2}
+              placeholder="Dica que ajuda o aluno a raciocinar sem revelar a resposta…"
+              value={newQuestion.hint_text}
+              onChange={e => setNewQuestion({ ...newQuestion, hint_text: e.target.value })} />
             <div className="adm-modal-footer">
               <button className="adm-btn adm-btn-ghost" onClick={() => setIsCreateQuestionOpen(false)}>Cancelar</button>
               <button className="adm-btn adm-btn-primary" onClick={handleCreateQuestion}>Salvar</button>
@@ -1344,6 +1349,11 @@ export default function Admin() {
               <option value="c">C</option>
               <option value="d">D</option>
             </select>
+            <label className="adm-label">Dica (opcional — para a recompensa Dica)</label>
+            <textarea className="adm-input" rows={2}
+              placeholder="Dica que ajuda o aluno a raciocinar sem revelar a resposta…"
+              value={editQuestion.hint_text || ""}
+              onChange={e => setEditQuestion({ ...editQuestion, hint_text: e.target.value })} />
             <div className="adm-modal-footer">
               <button className="adm-btn adm-btn-ghost" onClick={() => setEditQuestion(null)}>Cancelar</button>
               <button className="adm-btn adm-btn-primary" onClick={handleSaveQuestion}>Salvar</button>
