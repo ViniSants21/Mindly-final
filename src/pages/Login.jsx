@@ -168,7 +168,7 @@ export default function Login() {
             <div className="auth-field-row">
               <span />
               <button type="button" className="auth-forgot">
-                Esqueci minha senha
+          
               </button>
             </div>
 
