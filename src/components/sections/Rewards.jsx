@@ -4,7 +4,7 @@ import { rewardsService } from "../../services/rewardsService";
 import { getIcon } from "../../lib/icons";
 import { useToast } from "../../hooks/useToast";
 
-const FILTERS = ["Tudo", "Mais XP", "Dicas", "Avatar"];
+const FILTERS = ["Tudo", "Mais XP", "Dicas"];
 
 /* ─── Contador regressivo para boost/shield ativos ─── */
 function BoostTimer({ expiresAt, label, color = "#9b59b6" }) {
@@ -41,7 +41,6 @@ export default function Rewards() {
   const userId = session?.user?.id;
 
   const [rewards, setRewards] = useState([]);
-  const [owned, setOwned] = useState([]);
   const [filter, setFilter] = useState("Tudo");
   const [activating, setActivating] = useState(null);
   const { message, showToast } = useToast(3500);
@@ -56,34 +55,17 @@ export default function Rewards() {
 
   const load = useCallback(async () => {
     try {
-      const [list, ownedIds] = await Promise.all([
-        rewardsService.listRewards(),
-        userId ? rewardsService.listOwned(userId) : Promise.resolve([]),
-      ]);
+      const list = await rewardsService.listRewards();
       setRewards(list);
-      setOwned(ownedIds);
     } catch (err) {
       console.error("Rewards:", err.message);
     }
-  }, [userId]);
+  }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  const filtered = filter === "Tudo" ? rewards : rewards.filter((r) => r.category === filter);
-
-  /* ─── Compra recompensa NÃO consumível (ex.: Avatar) ─── */
-  const handleBuy = async (item) => {
-    if (!userId) return;
-    if (owned.includes(item.id)) { showToast("Você já possui este item"); return; }
-    try {
-      const res = await rewardsService.purchase(userId, item.id);
-      showToast(res.message);
-      if (res.success) {
-        await refreshProfile();
-        setOwned((prev) => [...prev, item.id]);
-      }
-    } catch (err) { showToast("Erro: " + err.message); }
-  };
+  const nonAvatar = rewards.filter((r) => r.category !== "Avatar");
+  const filtered = filter === "Tudo" ? nonAvatar : nonAvatar.filter((r) => r.category === filter);
 
   /* ─── Ativa recompensa consumível (Dobra XP / Proteção / Dica) ─── */
   const handleActivate = async (item) => {
@@ -143,10 +125,8 @@ export default function Rewards() {
 
       <div className="rewards-grid">
         {filtered.map((item) => {
-          const isOwned      = owned.includes(item.id);
           const canAfford    = coins >= item.price;
           const missing      = item.price - coins;
-          const isConsumable = item.consumable;
           const isActivating = activating === item.id;
 
           /* ── Estado especial: boost/shield já ativo ── */
@@ -155,23 +135,19 @@ export default function Rewards() {
           if (item.name?.includes("Prote")) alreadyActive = shieldActive;
 
           let cardClass = "reward-card";
-          if (item.locked)              cardClass += " locked-reward";
-          else if (!isConsumable && isOwned) cardClass += " owned-reward";
-          else if (!canAfford)          cardClass += " cant-afford";
-          if (alreadyActive)            cardClass += " boost-running";
+          if (item.locked)      cardClass += " locked-reward";
+          else if (!canAfford)  cardClass += " cant-afford";
+          if (alreadyActive)    cardClass += " boost-running";
 
           /* ── Label do botão ── */
           let btnLabel;
-          if (item.locked)                       btnLabel = "🔒 Bloqueado";
-          else if (!isConsumable && isOwned)     btnLabel = "✓ Adquirido";
-          else if (isActivating)                 btnLabel = "Ativando…";
-          else if (alreadyActive)                btnLabel = "✓ Ativo";
-          else if (!canAfford)                   btnLabel = `Faltam ${missing} moedas`;
-          else if (isConsumable)                 btnLabel = `Ativar · ${item.price} moedas`;
-          else                                   btnLabel = `${item.price} moedas`;
+          if (item.locked)      btnLabel = "🔒 Bloqueado";
+          else if (isActivating) btnLabel = "Ativando…";
+          else if (alreadyActive) btnLabel = "✓ Ativo";
+          else if (!canAfford)  btnLabel = `Faltam ${missing} moedas`;
+          else                  btnLabel = `Ativar · ${item.price} moedas`;
 
-          const isDisabled = item.locked || isActivating || alreadyActive ||
-                             (!isConsumable && isOwned) || !canAfford;
+          const isDisabled = item.locked || isActivating || alreadyActive || !canAfford;
 
           return (
             <div key={item.id} className={cardClass}>
@@ -179,22 +155,20 @@ export default function Rewards() {
                 {getIcon(item.icon, { size: 32 })}
               </div>
               <h4 style={{ margin: "8px 0 4px", fontSize: 14, color: "var(--navy)" }}>{item.name}</h4>
-              {isConsumable && (
-                <p style={{ fontSize: 11, color: "var(--gray-soft)", marginBottom: 8, lineHeight: 1.4 }}>
-                  {item.name?.includes("Dobra") || item.name?.includes("XP")
-                    ? "2× XP por 20 min"
-                    : item.name?.includes("Prote")
-                    ? "Sem perda de XP por 20 min"
-                    : "Adiciona 1 dica ao inventário"}
-                </p>
-              )}
-              {!canAfford && !isOwned && !item.locked && (
+              <p style={{ fontSize: 11, color: "var(--gray-soft)", marginBottom: 8, lineHeight: 1.4 }}>
+                {item.name?.includes("Dobra") || item.name?.includes("XP")
+                  ? "2× XP por 20 min"
+                  : item.name?.includes("Prote")
+                  ? "Sem perda de XP por 20 min"
+                  : "Adiciona 1 dica ao inventário"}
+              </p>
+              {!canAfford && !item.locked && (
                 <span className="reward-missing">Você tem {coins} moedas</span>
               )}
               <button
-                onClick={() => isConsumable ? handleActivate(item) : handleBuy(item)}
+                onClick={() => handleActivate(item)}
                 disabled={isDisabled}
-                className={!canAfford && !isOwned && !item.locked && !alreadyActive ? "btn-cant-afford" : ""}
+                className={!canAfford && !item.locked && !alreadyActive ? "btn-cant-afford" : ""}
               >
                 {btnLabel}
               </button>

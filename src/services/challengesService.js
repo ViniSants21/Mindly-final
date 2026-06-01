@@ -220,4 +220,26 @@ export const challengesService = {
       .eq("id", challengeId);
     if (error) throw error;
   },
+
+  /** Desconta 1 dica do saldo do usuário (profiles.hints_count). */
+  async useHint(userId) {
+    const { data: profile, error: fetchError } = await supabase
+      .from("profiles")
+      .select("hints_count")
+      .eq("id", userId)
+      .single();
+    if (fetchError) throw fetchError;
+
+    if ((profile?.hints_count ?? 0) <= 0) {
+      return { success: false, message: "Você não tem dicas disponíveis." };
+    }
+
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ hints_count: profile.hints_count - 1 })
+      .eq("id", userId);
+    if (updateError) throw updateError;
+
+    return { success: true };
+  },
 };
