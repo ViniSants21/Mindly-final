@@ -10,10 +10,10 @@ import "../styles/auth.css";
 
 
 const BENEFITS = [
-  { icon: "🎯", color: "#eff6ff", label: "Trilha personalizada", sub: "Conteúdo adaptado ao seu ritmo" },
-  { icon: "🏆", color: "#fefce8", label: "Conquistas e XP",      sub: "Evolua e ganhe recompensas" },
-  { icon: "📊", color: "#f0fdf4", label: "Progresso em tempo real", sub: "Veja sua evolução diária" },
-  { icon: "🔥", color: "#fff7ed", label: "Desafios diários",     sub: "Gamificação para manter o foco" },
+  { Icon: Target,   color: "#eff6ff", label: "Trilha personalizada",      sub: "Conteúdo adaptado ao seu ritmo" },
+  { Icon: Trophy,   color: "#fefce8", label: "Conquistas e XP",           sub: "Evolua e ganhe recompensas" },
+  { Icon: BarChart2,color: "#f0fdf4", label: "Progresso em tempo real",   sub: "Veja sua evolução diária" },
+  { Icon: Flame,    color: "#fff7ed", label: "Desafios diários",          sub: "Gamificação para manter o foco" },
 ];
 
 function traduzErro(msg = "") {
@@ -73,7 +73,7 @@ export default function Login() {
             {BENEFITS.map(b => (
               <li key={b.label} className="auth-benefit-item">
                 <div className="auth-benefit-icon" style={{ background: b.color }}>
-                  {b.icon}
+                  <b.Icon size={20} color="#3f7fe3" />
                 </div>
                 <div className="auth-benefit-text">
                   <strong>{b.label}</strong>

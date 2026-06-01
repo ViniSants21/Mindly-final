@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
   User, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2,
+  Rocket, TrendingUp, Gamepad2, Brain,
 } from "lucide-react";
 import lapis from "../assets/lapismindly.png";
 import mindlyLogo from "/images/mindly-logo.png";
@@ -10,10 +11,10 @@ import "../styles/auth.css";
 
 
 const BENEFITS = [
-  { icon: "🚀", color: "#eff6ff", label: "Comece em minutos",      sub: "Criação de conta rápida e gratuita" },
-  { icon: "📈", color: "#f0fdf4", label: "Evolua do básico ao avançado", sub: "Trilha adaptada ao seu nível" },
-  { icon: "🎮", color: "#fefce8", label: "Aprendizado gamificado", sub: "Pontos, conquistas e rankings" },
-  { icon: "🧠", color: "#fdf4ff", label: "Retenção garantida",     sub: "Técnicas validadas de memorização" },
+  { Icon: Rocket,      color: "#eff6ff", label: "Comece em minutos",            sub: "Criação de conta rápida e gratuita" },
+  { Icon: TrendingUp,  color: "#f0fdf4", label: "Evolua do básico ao avançado", sub: "Trilha adaptada ao seu nível" },
+  { Icon: Gamepad2,    color: "#fefce8", label: "Aprendizado gamificado",       sub: "Pontos, conquistas e rankings" },
+  { Icon: Brain,       color: "#fdf4ff", label: "Retenção garantida",           sub: "Técnicas validadas de memorização" },
 ];
 
 /* ─── Força da senha ─────────────────────────── */
@@ -107,7 +108,7 @@ export default function Register() {
             {BENEFITS.map(b => (
               <li key={b.label} className="auth-benefit-item">
                 <div className="auth-benefit-icon" style={{ background: b.color }}>
-                  {b.icon}
+                  <b.Icon size={20} color="#3f7fe3" />
                 </div>
                 <div className="auth-benefit-text">
                   <strong>{b.label}</strong>
