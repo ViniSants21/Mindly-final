@@ -84,7 +84,51 @@ export const challengesService = {
     return data;
   },
 
-  // ---- operações de Admin ----
+  // ---- perguntas (Admin) ----
+
+  /** Lista todas as perguntas com nome do desafio vinculado. */
+  async listAllQuestions() {
+    const { data, error } = await supabase
+      .from("challenge_questions")
+      .select("*, challenge:challenges(title)")
+      .order("challenge_id", { ascending: true });
+    if (error) throw error;
+    return data;
+  },
+
+  /** Cria uma pergunta de múltipla escolha. ID gerado automaticamente pelo banco. */
+  async createQuestion({ challenge_id, question, option_a, option_b, option_c, option_d, correct_answer }) {
+    const { data, error } = await supabase
+      .from("challenge_questions")
+      .insert({ challenge_id, question, option_a, option_b, option_c, option_d, correct_answer })
+      .select("*, challenge:challenges(title)")
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  /** Atualiza os campos de uma pergunta existente. */
+  async updateQuestion(questionId, updates) {
+    const { data, error } = await supabase
+      .from("challenge_questions")
+      .update(updates)
+      .eq("id", questionId)
+      .select("*, challenge:challenges(title)")
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  /** Remove uma pergunta pelo id. */
+  async removeQuestion(questionId) {
+    const { error } = await supabase
+      .from("challenge_questions")
+      .delete()
+      .eq("id", questionId);
+    if (error) throw error;
+  },
+
+  // ---- operações de Admin — desafios ----
 
   async create({ title, description, icon, status = "Ativo" }) {
     const { data, error } = await supabase

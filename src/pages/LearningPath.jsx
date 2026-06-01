@@ -20,7 +20,7 @@ function calcXP(doneIds) {
 }
 
 export default function LearningPath() {
-  const { session } = useAuth();
+  const { session, refreshProfile } = useAuth();
   const userId = session?.user?.id;
 
   const [etapaAtual, setEtapaAtual]   = useState(0);
@@ -53,10 +53,12 @@ export default function LearningPath() {
     if (isConcluida || !userId || completing) return;
     setCompleting(true);
     try {
-      await progressService.completeStep(userId, etapa.id);
+      await progressService.completeStep(userId, etapa.id, etapa.xp || 0);
       setConcluidas(prev => [...prev, etapa.id]);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
+      // Atualiza XP/nível no contexto global para refletir imediatamente na navbar
+      await refreshProfile();
     } catch (err) {
       console.error(err.message);
     } finally {

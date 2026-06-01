@@ -107,6 +107,17 @@ export default function Planner() {
       return;
     }
 
+    // Validação de conflito de horário — impede duas atividades no mesmo horário
+    const conflict = todaySchedule.find(
+      (b) => b.time === form.time && (!editing || b.id !== editing.id)
+    );
+    if (conflict) {
+      showToast(
+        `Conflito de horário: já existe "${conflict.subject}" às ${form.time}. Escolha outro horário.`
+      );
+      return;
+    }
+
     setSaving(true);
     try {
       if (editing) {

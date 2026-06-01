@@ -82,12 +82,13 @@
   gap: 16px;
   box-shadow: var(--shadow-sm);
   border: 1.5px solid rgba(63, 127, 227, 0.12);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition: var(--transition-card, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease);
 }
 
 .challenge-card:hover {
-  box-shadow: var(--shadow);
-  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(63, 127, 227, 0.16);
+  transform: translateY(-5px) scale(1.01);
+  border-color: rgba(63, 127, 227, 0.28);
 }
 
 .challenge-card.completed {
@@ -259,12 +260,12 @@
   border: 1.5px solid rgba(245, 154, 60, 0.25);
   text-align: center;
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  transition: var(--transition-card, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease), border-color 0.2s ease;
 }
 
 .game-card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-4px);
+  box-shadow: 0 14px 36px rgba(245, 154, 60, 0.22);
+  transform: translateY(-8px) scale(1.02);
   border-color: var(--orange);
 }
 

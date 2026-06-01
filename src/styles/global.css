@@ -24,10 +24,12 @@
   --radius: 12px;
   --radius-lg: 18px;
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 8px 18px rgba(0, 0, 0, 0.12);
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.15);
+  --shadow-hover: 0 16px 40px rgba(63, 127, 227, 0.18);
   --font-title: "Capriola", sans-serif;
   --font-body: "Open Sans", sans-serif;
+  --transition-card: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
 }
 
 /* ---- Reset ---- */
@@ -338,13 +340,16 @@ button {
   padding: 30px;
   box-shadow: var(--shadow);
   animation: slideInUp 0.6s ease-out;
-  transition: all 0.3s ease;
+  transition: var(--transition-card);
   display: flex;
   flex-direction: column;
+  border: 1.5px solid transparent;
+  cursor: default;
 }
 .tool-card:hover {
-  transform: translateY(-8px);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-10px) scale(1.01);
+  box-shadow: var(--shadow-hover);
+  border-color: rgba(63, 127, 227, 0.18);
 }
 .tool-header {
   display: flex;
@@ -367,6 +372,96 @@ button {
   line-height: 1.6;
   margin-bottom: 24px;
   flex: 1;
+}
+
+/* =====================================================================
+   CARROSSEL MOBILE
+   ===================================================================== */
+.tool-carousel {
+  display: none; /* visível apenas em mobile */
+  position: relative;
+  align-items: center;
+  gap: 12px;
+}
+
+.carousel-track {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-height: 260px;
+}
+
+.carousel-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(40px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.carousel-slide.carousel-active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+  position: relative;
+}
+
+/* Controles — botões grandes e contrastados */
+.carousel-ctrl {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(63, 127, 227, 0.45);
+  transition: background 0.2s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+  z-index: 2;
+}
+
+.carousel-ctrl:hover {
+  background: var(--blue-dark);
+  transform: scale(1.12);
+  box-shadow: 0 6px 20px rgba(63, 127, 227, 0.55);
+}
+
+.carousel-ctrl:active { transform: scale(0.96); }
+
+/* Indicadores de ponto */
+.carousel-dots {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+}
+
+.carousel-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(63, 127, 227, 0.25);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  padding: 0;
+}
+
+.carousel-dot-active {
+  background: var(--blue);
+  transform: scale(1.3);
+}
+
+@media (max-width: 680px) {
+  .tool-grid    { display: none; }
+  .tool-carousel { display: flex; }
 }
 
 /* =====================================================================
@@ -418,6 +513,13 @@ button {
   border-radius: var(--radius-lg);
   width: 300px;
   box-shadow: var(--shadow);
+  transition: var(--transition-card);
+  border: 1.5px solid transparent;
+}
+.about-item:hover {
+  transform: translateY(-8px) scale(1.01);
+  box-shadow: var(--shadow-hover);
+  border-color: rgba(63, 127, 227, 0.15);
 }
 .about-item h3 {
   margin-bottom: 10px;
@@ -606,9 +708,29 @@ button {
   font-size: 14px;
 }
 
+.footer-contact-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+}
+
 .footer-contact-icon {
   flex-shrink: 0;
   color: var(--orange);
+}
+
+.footer-whatsapp-icon {
+  color: #25D366 !important;
+  font-size: 15px;
+}
+
+.footer-whatsapp-link {
+  color: rgba(255, 255, 255, 0.7) !important;
+  transition: color 0.17s ease;
+}
+
+.footer-whatsapp-link:hover {
+  color: #25D366 !important;
 }
 
 /* --- Rodapé inferior --- */

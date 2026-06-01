@@ -3,11 +3,12 @@ import {
   LayoutDashboard, Users, Target, MessageSquare, TrendingUp,
   Zap, Trophy, HelpCircle, CheckCircle2, Clock, AlertCircle,
   ShieldCheck, BarChart2, UserPlus, Star, Search, RefreshCw,
-  ChevronRight, Award, Flame,
+  ChevronRight, Award, Flame, BookOpen, ListChecks, Trash2, Pencil,
 } from "lucide-react";
 import { getIcon, availableIconNames } from "../lib/icons";
 import { adminService } from "../services/adminService";
 import { challengesService } from "../services/challengesService";
+import { trailsService } from "../services/trailsService";
 import { useToast } from "../hooks/useToast";
 import { useAuth } from "../context/AuthContext";
 import { getAvatarUrl } from "../lib/avatar";
@@ -156,6 +157,20 @@ export default function Admin() {
   const [challengeSearch, setChallengeSearch] = useState("");
   const [ticketFilter, setTicketFilter]       = useState("Todos");
 
+  // Questions state
+  const [questions, setQuestions]                 = useState([]);
+  const [questionFilter, setQuestionFilter]       = useState("");
+  const [editQuestion, setEditQuestion]           = useState(null);
+  const [isCreateQuestionOpen, setIsCreateQuestionOpen] = useState(false);
+  const [newQuestion, setNewQuestion]             = useState({ challenge_id: "", question: "", option_a: "", option_b: "", option_c: "", option_d: "", correct_answer: "a" });
+
+  // Trails state
+  const [trails, setTrails]                 = useState([]);
+  const [trailFilter, setTrailFilter]       = useState("");
+  const [editTrail, setEditTrail]           = useState(null);
+  const [isCreateTrailOpen, setIsCreateTrailOpen] = useState(false);
+  const [newTrail, setNewTrail]             = useState({ titulo: "", nivel: "Fácil", tempo: "30 min", xp: 50, icon: "brain", conteudo: "", curiosidade: "", exemploPratico: "", dica: "" });
+
   // Modals
   const [editUser, setEditUser]             = useState(null);
   const [editChallenge, setEditChallenge]   = useState(null);
@@ -164,18 +179,22 @@ export default function Admin() {
   const [newChallenge, setNewChallenge]     = useState({ title: "", description: "", icon: "star" });
   const [replyText, setReplyText]           = useState("");
 
-  /* Load main data (users, challenges, tickets) */
+  /* Load main data (users, challenges, tickets, questions, trails) */
   const loadMain = useCallback(async () => {
     setLoadingMain(true);
     try {
-      const [u, c, t] = await Promise.all([
+      const [u, c, t, q, tr] = await Promise.all([
         adminService.listUsers(),
         challengesService.listAll(),
         adminService.listTickets(),
+        challengesService.listAllQuestions().catch(() => []),
+        trailsService.listAll().catch(() => []),
       ]);
       setUsers(u);
       setChallenges(c);
       setTickets(t);
+      setQuestions(q);
+      setTrails(tr);
     } catch (err) {
       showToast("Erro ao carregar dados: " + err.message);
     } finally {
@@ -284,6 +303,73 @@ export default function Admin() {
     } catch (err) { showToast("Erro: " + err.message); }
   };
 
+  /* ── Question handlers ── */
+  const handleCreateQuestion = async () => {
+    if (!newQuestion.challenge_id || !newQuestion.question || !newQuestion.option_a || !newQuestion.option_b) {
+      showToast("Preencha desafio, pergunta e ao menos as opções A e B.");
+      return;
+    }
+    try {
+      const created = await challengesService.createQuestion(newQuestion);
+      setQuestions(prev => [...prev, created]);
+      setIsCreateQuestionOpen(false);
+      setNewQuestion({ challenge_id: "", question: "", option_a: "", option_b: "", option_c: "", option_d: "", correct_answer: "a" });
+      showToast("Pergunta criada!");
+    } catch (err) { showToast("Erro: " + err.message); }
+  };
+
+  const handleSaveQuestion = async () => {
+    try {
+      const { id, challenge, ...updates } = editQuestion;
+      const updated = await challengesService.updateQuestion(id, updates);
+      setQuestions(prev => prev.map(q => q.id === updated.id ? updated : q));
+      setEditQuestion(null);
+      showToast("Pergunta atualizada!");
+    } catch (err) { showToast("Erro: " + err.message); }
+  };
+
+  const deleteQuestion = async (id) => {
+    try {
+      await challengesService.removeQuestion(id);
+      setQuestions(prev => prev.filter(q => q.id !== id));
+      showToast("Pergunta removida.");
+    } catch (err) { showToast("Erro: " + err.message); }
+  };
+
+  /* ── Trail handlers ── */
+  const handleCreateTrail = async () => {
+    if (!newTrail.titulo || !newTrail.conteudo) {
+      showToast("Preencha título e conteúdo do módulo.");
+      return;
+    }
+    try {
+      const position = trails.length + 1;
+      const created = await trailsService.create({ ...newTrail, position });
+      setTrails(prev => [...prev, created]);
+      setIsCreateTrailOpen(false);
+      setNewTrail({ titulo: "", nivel: "Fácil", tempo: "30 min", xp: 50, icon: "brain", conteudo: "", curiosidade: "", exemploPratico: "", dica: "" });
+      showToast("Módulo de trilha criado!");
+    } catch (err) { showToast("Erro: " + err.message); }
+  };
+
+  const handleSaveTrail = async () => {
+    try {
+      const { id, ...updates } = editTrail;
+      const updated = await trailsService.update(id, updates);
+      setTrails(prev => prev.map(t => t.id === updated.id ? updated : t));
+      setEditTrail(null);
+      showToast("Módulo atualizado!");
+    } catch (err) { showToast("Erro: " + err.message); }
+  };
+
+  const deleteTrail = async (id) => {
+    try {
+      await trailsService.remove(id);
+      setTrails(prev => prev.filter(t => t.id !== id));
+      showToast("Módulo removido.");
+    } catch (err) { showToast("Erro: " + err.message); }
+  };
+
   /* ── Filtered data ── */
   const filteredUsers = useMemo(() =>
     users.filter(u =>
@@ -300,11 +386,23 @@ export default function Admin() {
     tickets.filter(t => ticketFilter === "Todos" || t.status === ticketFilter),
     [tickets, ticketFilter]);
 
+  const filteredQuestions = useMemo(() =>
+    questions.filter(q =>
+      q.question?.toLowerCase().includes(questionFilter.toLowerCase()) ||
+      q.challenge?.title?.toLowerCase().includes(questionFilter.toLowerCase())
+    ), [questions, questionFilter]);
+
+  const filteredTrails = useMemo(() =>
+    trails.filter(t => t.titulo?.toLowerCase().includes(trailFilter.toLowerCase())),
+    [trails, trailFilter]);
+
   /* ── Sidebar nav ── */
   const nav = [
     { key: "Dashboard", icon: <LayoutDashboard size={18} />, label: "Dashboard" },
     { key: "Usuários",  icon: <Users size={18} />,           label: "Usuários" },
     { key: "Desafios",  icon: <Target size={18} />,          label: "Desafios" },
+    { key: "Perguntas", icon: <HelpCircle size={18} />,      label: "Perguntas" },
+    { key: "Trilhas",   icon: <BookOpen size={18} />,        label: "Trilhas" },
     { key: "Tickets",   icon: <MessageSquare size={18} />,   label: "Tickets" },
   ];
 
@@ -725,16 +823,176 @@ export default function Admin() {
     </div>
   );
 
+  /* ═══════════════════════════════════════
+     QUESTIONS PANEL
+  ═══════════════════════════════════════ */
+  const QuestionsPanel = () => (
+    <div className="adm-panel">
+      <div className="adm-panel-header">
+        <div>
+          <h2>Perguntas</h2>
+          <span className="adm-panel-count">{filteredQuestions.length} perguntas</span>
+        </div>
+        <div className="adm-panel-actions">
+          <div className="adm-search-wrap">
+            <Search size={15} className="adm-search-icon" />
+            <input className="adm-search" placeholder="Buscar pergunta ou desafio…"
+              value={questionFilter} onChange={e => setQuestionFilter(e.target.value)} />
+          </div>
+          <button className="adm-btn adm-btn-primary" onClick={() => setIsCreateQuestionOpen(true)}>
+            + Criar Pergunta
+          </button>
+        </div>
+      </div>
+
+      {loadingMain ? (
+        <div className="adm-table-skeleton">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} h={52} r={6} />)}
+        </div>
+      ) : filteredQuestions.length === 0 ? (
+        <p className="adm-empty-mini" style={{ padding: "32px", textAlign: "center" }}>
+          Nenhuma pergunta encontrada. Clique em "+ Criar Pergunta" para adicionar.
+        </p>
+      ) : (
+        <div className="adm-table-wrap">
+          <table className="adm-table">
+            <thead>
+              <tr>
+                <th>Desafio</th>
+                <th>Pergunta</th>
+                <th>Resp. Correta</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredQuestions.map(q => (
+                <tr key={q.id}>
+                  <td><span className="adm-badge adm-badge-level">{q.challenge?.title || "—"}</span></td>
+                  <td style={{ maxWidth: 280 }}>
+                    <span style={{ fontSize: 13, color: "#334155", lineHeight: 1.4, display: "block",
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {q.question}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="adm-badge adm-badge-active" style={{ textTransform: "uppercase" }}>
+                      {q.correct_answer}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="adm-actions">
+                      <button className="adm-btn adm-btn-ghost" onClick={() => setEditQuestion({ ...q })}>
+                        <Pencil size={13} /> Editar
+                      </button>
+                      <button className="adm-btn adm-btn-danger" onClick={() => deleteQuestion(q.id)}>
+                        <Trash2 size={13} /> Apagar
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+
+  /* ═══════════════════════════════════════
+     TRAILS PANEL
+  ═══════════════════════════════════════ */
+  const TrailsPanel = () => (
+    <div className="adm-panel">
+      <div className="adm-panel-header">
+        <div>
+          <h2>Trilhas de Aprendizagem</h2>
+          <span className="adm-panel-count">{filteredTrails.length} módulos</span>
+        </div>
+        <div className="adm-panel-actions">
+          <div className="adm-search-wrap">
+            <Search size={15} className="adm-search-icon" />
+            <input className="adm-search" placeholder="Buscar módulo…"
+              value={trailFilter} onChange={e => setTrailFilter(e.target.value)} />
+          </div>
+          <button className="adm-btn adm-btn-primary" onClick={() => setIsCreateTrailOpen(true)}>
+            + Criar Módulo
+          </button>
+        </div>
+      </div>
+
+      {loadingMain ? (
+        <div className="adm-table-skeleton">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} h={52} r={6} />)}
+        </div>
+      ) : filteredTrails.length === 0 ? (
+        <p className="adm-empty-mini" style={{ padding: "32px", textAlign: "center" }}>
+          Nenhum módulo encontrado. Clique em "+ Criar Módulo" para adicionar.
+        </p>
+      ) : (
+        <div className="adm-table-wrap">
+          <table className="adm-table">
+            <thead>
+              <tr>
+                <th>Ícone</th>
+                <th>Título</th>
+                <th>Nível</th>
+                <th>Tempo</th>
+                <th>XP</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredTrails.map(t => (
+                <tr key={t.id}>
+                  <td style={{ textAlign: "center" }}>{getIcon(t.icon, { size: 22 })}</td>
+                  <td><strong>{t.titulo}</strong></td>
+                  <td>
+                    <span className={`adm-badge ${t.nivel === "Fácil" ? "adm-badge-active" : t.nivel === "Médio" ? "adm-badge-warn" : "adm-badge-level"}`}>
+                      {t.nivel}
+                    </span>
+                  </td>
+                  <td className="adm-td-muted">{t.tempo}</td>
+                  <td><strong style={{ color: "#f59a3c" }}>{t.xp} XP</strong></td>
+                  <td>
+                    <div className="adm-actions">
+                      <button className="adm-btn adm-btn-ghost" onClick={() => setEditTrail({
+                        ...t, exemploPratico: t.exemplo_pratico || t.exemploPratico || ""
+                      })}>
+                        <Pencil size={13} /> Editar
+                      </button>
+                      <button className="adm-btn adm-btn-danger" onClick={() => deleteTrail(t.id)}>
+                        <Trash2 size={13} /> Apagar
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+
   const renderPanel = () => {
     switch (activeTab) {
       case "Usuários":  return <UsersPanel />;
       case "Desafios":  return <ChallengesPanel />;
+      case "Perguntas": return <QuestionsPanel />;
+      case "Trilhas":   return <TrailsPanel />;
       case "Tickets":   return <TicketsPanel />;
       default:          return <DashboardPanel />;
     }
   };
 
-  const tabLabels = { Dashboard: "Visão Geral", Usuários: "Gerenciar Usuários", Desafios: "Gerenciar Desafios", Tickets: "Suporte" };
+  const tabLabels = {
+    Dashboard: "Visão Geral",
+    Usuários:  "Gerenciar Usuários",
+    Desafios:  "Gerenciar Desafios",
+    Perguntas: "Gerenciar Perguntas",
+    Trilhas:   "Gerenciar Trilhas",
+    Tickets:   "Suporte",
+  };
 
   /* ═══════════════════════════════════════
      RENDER
@@ -902,6 +1160,189 @@ export default function Admin() {
             <div className="adm-modal-footer">
               <button className="adm-btn adm-btn-ghost" onClick={() => setEditChallenge(null)}>Cancelar</button>
               <button className="adm-btn adm-btn-primary" onClick={handleSaveChallenge}>Salvar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ Criar Pergunta ══ */}
+      {isCreateQuestionOpen && (
+        <div className="adm-overlay" onClick={e => e.target === e.currentTarget && setIsCreateQuestionOpen(false)}>
+          <div className="adm-modal adm-modal-lg">
+            <div className="adm-modal-header">
+              <h3>Criar Pergunta</h3>
+              <button className="adm-modal-close" onClick={() => setIsCreateQuestionOpen(false)}>✕</button>
+            </div>
+            <label className="adm-label">Desafio</label>
+            <select className="adm-input" value={newQuestion.challenge_id}
+              onChange={e => setNewQuestion({ ...newQuestion, challenge_id: e.target.value })}>
+              <option value="">— Selecione o desafio —</option>
+              {challenges.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+            </select>
+            <label className="adm-label">Pergunta</label>
+            <textarea className="adm-input" rows={2} placeholder="Texto da pergunta…"
+              value={newQuestion.question} onChange={e => setNewQuestion({ ...newQuestion, question: e.target.value })} />
+            <label className="adm-label">Opção A</label>
+            <input className="adm-input" placeholder="Opção A" value={newQuestion.option_a}
+              onChange={e => setNewQuestion({ ...newQuestion, option_a: e.target.value })} />
+            <label className="adm-label">Opção B</label>
+            <input className="adm-input" placeholder="Opção B" value={newQuestion.option_b}
+              onChange={e => setNewQuestion({ ...newQuestion, option_b: e.target.value })} />
+            <label className="adm-label">Opção C (opcional)</label>
+            <input className="adm-input" placeholder="Opção C" value={newQuestion.option_c}
+              onChange={e => setNewQuestion({ ...newQuestion, option_c: e.target.value })} />
+            <label className="adm-label">Opção D (opcional)</label>
+            <input className="adm-input" placeholder="Opção D" value={newQuestion.option_d}
+              onChange={e => setNewQuestion({ ...newQuestion, option_d: e.target.value })} />
+            <label className="adm-label">Resposta Correta</label>
+            <select className="adm-input" value={newQuestion.correct_answer}
+              onChange={e => setNewQuestion({ ...newQuestion, correct_answer: e.target.value })}>
+              <option value="a">A</option>
+              <option value="b">B</option>
+              <option value="c">C</option>
+              <option value="d">D</option>
+            </select>
+            <div className="adm-modal-footer">
+              <button className="adm-btn adm-btn-ghost" onClick={() => setIsCreateQuestionOpen(false)}>Cancelar</button>
+              <button className="adm-btn adm-btn-primary" onClick={handleCreateQuestion}>Salvar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ Editar Pergunta ══ */}
+      {editQuestion && (
+        <div className="adm-overlay" onClick={e => e.target === e.currentTarget && setEditQuestion(null)}>
+          <div className="adm-modal adm-modal-lg">
+            <div className="adm-modal-header">
+              <h3>Editar Pergunta</h3>
+              <button className="adm-modal-close" onClick={() => setEditQuestion(null)}>✕</button>
+            </div>
+            <label className="adm-label">Desafio</label>
+            <select className="adm-input" value={editQuestion.challenge_id}
+              onChange={e => setEditQuestion({ ...editQuestion, challenge_id: e.target.value })}>
+              {challenges.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+            </select>
+            <label className="adm-label">Pergunta</label>
+            <textarea className="adm-input" rows={2} value={editQuestion.question}
+              onChange={e => setEditQuestion({ ...editQuestion, question: e.target.value })} />
+            <label className="adm-label">Opção A</label>
+            <input className="adm-input" value={editQuestion.option_a || ""}
+              onChange={e => setEditQuestion({ ...editQuestion, option_a: e.target.value })} />
+            <label className="adm-label">Opção B</label>
+            <input className="adm-input" value={editQuestion.option_b || ""}
+              onChange={e => setEditQuestion({ ...editQuestion, option_b: e.target.value })} />
+            <label className="adm-label">Opção C</label>
+            <input className="adm-input" value={editQuestion.option_c || ""}
+              onChange={e => setEditQuestion({ ...editQuestion, option_c: e.target.value })} />
+            <label className="adm-label">Opção D</label>
+            <input className="adm-input" value={editQuestion.option_d || ""}
+              onChange={e => setEditQuestion({ ...editQuestion, option_d: e.target.value })} />
+            <label className="adm-label">Resposta Correta</label>
+            <select className="adm-input" value={editQuestion.correct_answer}
+              onChange={e => setEditQuestion({ ...editQuestion, correct_answer: e.target.value })}>
+              <option value="a">A</option>
+              <option value="b">B</option>
+              <option value="c">C</option>
+              <option value="d">D</option>
+            </select>
+            <div className="adm-modal-footer">
+              <button className="adm-btn adm-btn-ghost" onClick={() => setEditQuestion(null)}>Cancelar</button>
+              <button className="adm-btn adm-btn-primary" onClick={handleSaveQuestion}>Salvar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ Criar Módulo de Trilha ══ */}
+      {isCreateTrailOpen && (
+        <div className="adm-overlay" onClick={e => e.target === e.currentTarget && setIsCreateTrailOpen(false)}>
+          <div className="adm-modal adm-modal-lg" style={{ maxHeight: "90vh", overflowY: "auto" }}>
+            <div className="adm-modal-header">
+              <h3>Criar Módulo de Trilha</h3>
+              <button className="adm-modal-close" onClick={() => setIsCreateTrailOpen(false)}>✕</button>
+            </div>
+            <label className="adm-label">Título do Módulo</label>
+            <input className="adm-input" placeholder="Ex: Introdução ao TDAH" value={newTrail.titulo}
+              onChange={e => setNewTrail({ ...newTrail, titulo: e.target.value })} />
+            <label className="adm-label">Nível</label>
+            <select className="adm-input" value={newTrail.nivel}
+              onChange={e => setNewTrail({ ...newTrail, nivel: e.target.value })}>
+              <option>Fácil</option><option>Médio</option><option>Avançado</option>
+            </select>
+            <label className="adm-label">Ícone</label>
+            <select className="adm-input" value={newTrail.icon}
+              onChange={e => setNewTrail({ ...newTrail, icon: e.target.value })}>
+              {availableIconNames.map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+            <label className="adm-label">Tempo estimado</label>
+            <input className="adm-input" placeholder="Ex: 30 min" value={newTrail.tempo}
+              onChange={e => setNewTrail({ ...newTrail, tempo: e.target.value })} />
+            <label className="adm-label">XP concedido</label>
+            <input className="adm-input" type="number" min={0} value={newTrail.xp}
+              onChange={e => setNewTrail({ ...newTrail, xp: parseInt(e.target.value) || 0 })} />
+            <label className="adm-label">Conteúdo</label>
+            <textarea className="adm-input" rows={4} placeholder="Conteúdo principal do módulo…"
+              value={newTrail.conteudo} onChange={e => setNewTrail({ ...newTrail, conteudo: e.target.value })} />
+            <label className="adm-label">Curiosidade (opcional)</label>
+            <textarea className="adm-input" rows={2} placeholder="Fato curioso relacionado ao tema…"
+              value={newTrail.curiosidade} onChange={e => setNewTrail({ ...newTrail, curiosidade: e.target.value })} />
+            <label className="adm-label">Exemplo Prático (opcional)</label>
+            <textarea className="adm-input" rows={2} placeholder="Exemplo do cotidiano…"
+              value={newTrail.exemploPratico} onChange={e => setNewTrail({ ...newTrail, exemploPratico: e.target.value })} />
+            <label className="adm-label">Dica</label>
+            <textarea className="adm-input" rows={2} placeholder="Dica prática para o aluno…"
+              value={newTrail.dica} onChange={e => setNewTrail({ ...newTrail, dica: e.target.value })} />
+            <div className="adm-modal-footer">
+              <button className="adm-btn adm-btn-ghost" onClick={() => setIsCreateTrailOpen(false)}>Cancelar</button>
+              <button className="adm-btn adm-btn-primary" onClick={handleCreateTrail}>Salvar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ Editar Módulo de Trilha ══ */}
+      {editTrail && (
+        <div className="adm-overlay" onClick={e => e.target === e.currentTarget && setEditTrail(null)}>
+          <div className="adm-modal adm-modal-lg" style={{ maxHeight: "90vh", overflowY: "auto" }}>
+            <div className="adm-modal-header">
+              <h3>Editar Módulo</h3>
+              <button className="adm-modal-close" onClick={() => setEditTrail(null)}>✕</button>
+            </div>
+            <label className="adm-label">Título</label>
+            <input className="adm-input" value={editTrail.titulo}
+              onChange={e => setEditTrail({ ...editTrail, titulo: e.target.value })} />
+            <label className="adm-label">Nível</label>
+            <select className="adm-input" value={editTrail.nivel}
+              onChange={e => setEditTrail({ ...editTrail, nivel: e.target.value })}>
+              <option>Fácil</option><option>Médio</option><option>Avançado</option>
+            </select>
+            <label className="adm-label">Ícone</label>
+            <select className="adm-input" value={editTrail.icon}
+              onChange={e => setEditTrail({ ...editTrail, icon: e.target.value })}>
+              {availableIconNames.map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+            <label className="adm-label">Tempo</label>
+            <input className="adm-input" value={editTrail.tempo}
+              onChange={e => setEditTrail({ ...editTrail, tempo: e.target.value })} />
+            <label className="adm-label">XP</label>
+            <input className="adm-input" type="number" min={0} value={editTrail.xp}
+              onChange={e => setEditTrail({ ...editTrail, xp: parseInt(e.target.value) || 0 })} />
+            <label className="adm-label">Conteúdo</label>
+            <textarea className="adm-input" rows={4} value={editTrail.conteudo}
+              onChange={e => setEditTrail({ ...editTrail, conteudo: e.target.value })} />
+            <label className="adm-label">Curiosidade</label>
+            <textarea className="adm-input" rows={2} value={editTrail.curiosidade || ""}
+              onChange={e => setEditTrail({ ...editTrail, curiosidade: e.target.value })} />
+            <label className="adm-label">Exemplo Prático</label>
+            <textarea className="adm-input" rows={2} value={editTrail.exemploPratico || editTrail.exemplo_pratico || ""}
+              onChange={e => setEditTrail({ ...editTrail, exemploPratico: e.target.value })} />
+            <label className="adm-label">Dica</label>
+            <textarea className="adm-input" rows={2} value={editTrail.dica || ""}
+              onChange={e => setEditTrail({ ...editTrail, dica: e.target.value })} />
+            <div className="adm-modal-footer">
+              <button className="adm-btn adm-btn-ghost" onClick={() => setEditTrail(null)}>Cancelar</button>
+              <button className="adm-btn adm-btn-primary" onClick={handleSaveTrail}>Salvar</button>
             </div>
           </div>
         </div>

@@ -16,8 +16,11 @@ export const progressService = {
     return data.map((r) => r.step_id);
   },
 
-  /** Marca uma etapa da trilha como concluída. */
-  async completeStep(userId, stepId) {
+  /**
+   * Marca uma etapa da trilha como concluída.
+   * Se xpAmount > 0, incrementa o XP e recalcula o nível no perfil do usuário.
+   */
+  async completeStep(userId, stepId, xpAmount = 0) {
     const { error } = await supabase
       .from("learning_progress")
       .upsert(
@@ -25,6 +28,32 @@ export const progressService = {
         { onConflict: "user_id,step_id", ignoreDuplicates: true }
       );
     if (error) throw error;
+
+    if (xpAmount > 0) {
+      // Tenta usar a RPC para incrementar XP de forma atômica
+      const { error: rpcErr } = await supabase.rpc("add_learning_xp", {
+        p_user_id: userId,
+        p_xp: xpAmount,
+      });
+
+      // Se a RPC não existir no banco, faz o cálculo no cliente como fallback
+      if (rpcErr) {
+        const { data: profile, error: pErr } = await supabase
+          .from("profiles")
+          .select("xp")
+          .eq("id", userId)
+          .single();
+
+        if (!pErr && profile) {
+          const newXp = (profile.xp || 0) + xpAmount;
+          const newLevel = Math.max(1, Math.floor(newXp / 100) + 1);
+          await supabase
+            .from("profiles")
+            .update({ xp: newXp, level: newLevel })
+            .eq("id", userId);
+        }
+      }
+    }
   },
 
   // ---- Conquistas ----

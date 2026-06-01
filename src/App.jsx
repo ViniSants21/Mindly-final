@@ -16,6 +16,9 @@ import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import Returns from "./pages/Returns";
 
 /**
  * Layout decide quando mostrar Navbar/Footer e renderiza as rotas.
@@ -98,6 +101,9 @@ function Layout() {
           }
         />
 
+        <Route path="/privacidade" element={<Privacy />} />
+        <Route path="/termos" element={<Terms />} />
+        <Route path="/trocas" element={<Returns />} />
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Register />} />
         <Route path="*" element={<NotFound />} />
